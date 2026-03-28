@@ -78,7 +78,75 @@ contract ArcBountyBoardTest {
         );
 
         _mustSucceed(
-            sponsor.execute(address(board), abi.encodeWithSignature("approveBounty(uint256)", 0))
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature("approveBounty(uint256,string)", 0, "ipfs://review-pass-1")
+            )
+        );
+
+        assert(stablecoin.balanceOf(address(claimant)) == PAYOUT);
+    }
+
+    function testCreatorCanRequestChangesThenClaimantResubmits() public {
+        setUp();
+
+        _mustSucceed(
+            sponsor.execute(
+                address(stablecoin),
+                abi.encodeWithSignature("approve(address,uint256)", address(board), PAYOUT)
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature(
+                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "ipfs://bounty-review-1",
+                    uint128(PAYOUT),
+                    uint32(1 days),
+                    uint32(2 days),
+                    uint32(1 days)
+                )
+            )
+        );
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("claimBounty(uint256,uint256)", 0, AGENT_ID)
+            )
+        );
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("submitResult(uint256,string)", 0, "ipfs://result-review-1")
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature("requestChanges(uint256,string)", 0, "ipfs://review-revise-1")
+            )
+        );
+
+        ArcBountyBoard.Bounty memory bountyAfterReview = board.getBounty(0);
+        assert(uint256(bountyAfterReview.status) == uint256(ArcBountyBoard.Status.RevisionRequested));
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("submitResult(uint256,string)", 0, "ipfs://result-review-2")
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature("approveBounty(uint256,string)", 0, "ipfs://review-pass-2")
+            )
         );
 
         assert(stablecoin.balanceOf(address(claimant)) == PAYOUT);
@@ -242,6 +310,62 @@ contract ArcBountyBoardTest {
                 abi.encodeWithSignature("postBountyMessage(uint256,string)", 0, "ipfs://message-2")
             )
         );
+    }
+
+    function testDisputeBlocksTimeoutRelease() public {
+        setUp();
+
+        _mustSucceed(
+            sponsor.execute(
+                address(stablecoin),
+                abi.encodeWithSignature("approve(address,uint256)", address(board), PAYOUT)
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature(
+                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "ipfs://bounty-dispute-1",
+                    uint128(PAYOUT),
+                    uint32(1 days),
+                    uint32(2 days),
+                    uint32(1 days)
+                )
+            )
+        );
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("claimBounty(uint256,uint256)", 0, AGENT_ID)
+            )
+        );
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("submitResult(uint256,string)", 0, "ipfs://result-dispute-1")
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature("openDispute(uint256,string)", 0, "ipfs://dispute-1")
+            )
+        );
+
+        vm.warp(block.timestamp + 2 days);
+
+        (bool success,) = claimant.execute(
+            address(board),
+            abi.encodeWithSignature("releaseAfterReviewTimeout(uint256)", 0)
+        );
+
+        assert(!success);
+        assert(stablecoin.balanceOf(address(claimant)) == 0);
     }
 
     function _mustSucceed(bool success, bytes memory) private pure {

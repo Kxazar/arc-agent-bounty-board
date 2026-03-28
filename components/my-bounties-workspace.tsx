@@ -5,12 +5,14 @@ import { formatUsdc } from "@/lib/format";
 interface MyBountiesWorkspaceProps {
   myBounties: BountyView[];
   onEditBounty: (bounty: BountyView) => void;
+  onOpenReview: (bounty: BountyView) => void;
   onOpenDiscussion: (bounty: BountyView) => void;
 }
 
 export function MyBountiesWorkspace({
   myBounties,
   onEditBounty,
+  onOpenReview,
   onOpenDiscussion
 }: MyBountiesWorkspaceProps) {
   return (
@@ -43,6 +45,11 @@ export function MyBountiesWorkspace({
                 {bounty.status === 0 ? (
                   <button className="button button-secondary" onClick={() => onEditBounty(bounty)} type="button">
                     Edit bounty
+                  </button>
+                ) : null}
+                {bounty.status === 2 ? (
+                  <button className="button button-secondary" onClick={() => onOpenReview(bounty)} type="button">
+                    Review submission
                   </button>
                 ) : null}
                 <button className="button button-ghost" onClick={() => onOpenDiscussion(bounty)} type="button">

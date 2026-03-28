@@ -4,11 +4,12 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import { formatUnits, maxUint256, parseUnits, type Address, type Hex, type PublicClient } from "viem";
 
 import { defaultCreateForm } from "@/components/bounty-board-config";
-import type { BoardTab, BountyView, CreateForm, ReputationDraft } from "@/components/bounty-board-types";
+import type { BoardTab, BountyView, CreateForm, ReputationDraft, ReviewDraft } from "@/components/bounty-board-types";
 import { arcBountyBoardAbi, erc20Abi, identityRegistryAbi } from "@/lib/abi";
-import { buildMetadataUri, readReputationSummary, type ReputationSummary } from "@/lib/agent-tools";
+import { buildBountyNoteUri, buildMetadataUri, readReputationSummary, type ReputationSummary } from "@/lib/agent-tools";
 import { ARC_CONTRACTS, arcTestnet } from "@/lib/arc";
 import {
+  defaultReviewDraft,
   defaultReputationDraft,
   getErrorMessage,
   parseNumericId,
@@ -83,6 +84,8 @@ export function useBountyBoardActions({
   const [reputationDrafts, setReputationDrafts] = useState<Record<string, ReputationDraft>>({});
   const [reputationReceipts, setReputationReceipts] = useState<Record<string, string>>({});
   const [activeReputationBountyId, setActiveReputationBountyId] = useState<string | null>(null);
+  const [reviewDrafts, setReviewDrafts] = useState<Record<string, ReviewDraft>>({});
+  const [activeReviewBountyId, setActiveReviewBountyId] = useState<string | null>(null);
   const [editingBountyId, setEditingBountyId] = useState<string | null>(null);
   const [isPostingReputationFor, setIsPostingReputationFor] = useState<string | null>(null);
 
@@ -190,6 +193,16 @@ export function useBountyBoardActions({
     }));
   }
 
+  function openReviewComposer(bounty: BountyView) {
+    const key = bounty.id.toString();
+
+    setActiveReviewBountyId(key);
+    setReviewDrafts((current) => ({
+      ...current,
+      [key]: current[key] ?? defaultReviewDraft(bounty.title)
+    }));
+  }
+
   function updateReputationDraft(
     bountyId: string,
     bountyTitle: string,
@@ -198,6 +211,17 @@ export function useBountyBoardActions({
     setReputationDrafts((current) => ({
       ...current,
       [bountyId]: updater(current[bountyId] ?? defaultReputationDraft(bountyTitle))
+    }));
+  }
+
+  function updateReviewDraft(
+    bountyId: string,
+    bountyTitle: string,
+    updater: (draft: ReviewDraft) => ReviewDraft
+  ) {
+    setReviewDrafts((current) => ({
+      ...current,
+      [bountyId]: updater(current[bountyId] ?? defaultReviewDraft(bountyTitle))
     }));
   }
 
@@ -393,10 +417,27 @@ export function useBountyBoardActions({
 
       await waitForReceipt(hash);
       await refreshBoard();
-      setNotice("Result submitted and review window is now active.");
+      setNotice("Result submitted. The sponsor review gate is now active.");
     } catch (submitError) {
       setError(getErrorMessage(submitError));
     }
+  }
+
+  function buildReviewNoteUri(bounty: BountyView, kind: "review_passed" | "changes_requested" | "dispute_opened") {
+    const bountyKey = bounty.id.toString();
+    const note = (reviewDrafts[bountyKey] ?? defaultReviewDraft(bounty.title)).note.trim();
+
+    const fallbackNote =
+      kind === "review_passed"
+        ? `Review passed for "${bounty.title}". Releasing the escrowed payout.`
+        : kind === "changes_requested"
+          ? `Changes requested for "${bounty.title}". Please revise and resubmit.`
+          : `Dispute opened for "${bounty.title}". Waiting for decentralized resolution.`;
+
+    return buildBountyNoteUri({
+      kind,
+      note: note || fallbackNote
+    });
   }
 
   async function runBoardAction(functionName: BoardActionName, bounty: BountyView, label: string) {
@@ -427,6 +468,95 @@ export function useBountyBoardActions({
       } else {
         setNotice("Action confirmed on Arc.");
       }
+    } catch (actionError) {
+      setError(getErrorMessage(actionError));
+    }
+  }
+
+  async function approveBounty(bounty: BountyView) {
+    if (!hasBountyBoardAddress) {
+      setError("Deploy the board contract and expose NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS first.");
+      return;
+    }
+
+    try {
+      await ensureArcWallet();
+      setError(null);
+      setNotice("Passing sponsor review and releasing payout...");
+
+      const hash = await writeContractAsync({
+        address: resolvedBoardAddress,
+        abi: arcBountyBoardAbi,
+        functionName: "approveBounty",
+        args: [bounty.id, buildReviewNoteUri(bounty, "review_passed")],
+        chainId: arcTestnet.id
+      });
+
+      await waitForReceipt(hash);
+      await refreshBoard();
+      setActiveReviewBountyId(null);
+
+      if (bounty.agentId > 0n) {
+        openReputationComposer(bounty);
+      }
+
+      setNotice("Review passed and payout released. Finish the flow with an onchain reputation note.");
+    } catch (actionError) {
+      setError(getErrorMessage(actionError));
+    }
+  }
+
+  async function requestChanges(bounty: BountyView) {
+    if (!hasBountyBoardAddress) {
+      setError("Deploy the board contract and expose NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS first.");
+      return;
+    }
+
+    try {
+      await ensureArcWallet();
+      setError(null);
+      setNotice("Requesting a revision from the claimant...");
+
+      const hash = await writeContractAsync({
+        address: resolvedBoardAddress,
+        abi: arcBountyBoardAbi,
+        functionName: "requestChanges",
+        args: [bounty.id, buildReviewNoteUri(bounty, "changes_requested")],
+        chainId: arcTestnet.id
+      });
+
+      await waitForReceipt(hash);
+      await refreshBoard();
+      setActiveReviewBountyId(null);
+      setNotice("Revision requested. The claimant can now resubmit or escalate into dispute.");
+    } catch (actionError) {
+      setError(getErrorMessage(actionError));
+    }
+  }
+
+  async function openDispute(bounty: BountyView) {
+    if (!hasBountyBoardAddress) {
+      setError("Deploy the board contract and expose NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS first.");
+      return;
+    }
+
+    try {
+      await ensureArcWallet();
+      setError(null);
+      setNotice("Opening a dispute and freezing the escrow...");
+
+      const hash = await writeContractAsync({
+        address: resolvedBoardAddress,
+        abi: arcBountyBoardAbi,
+        functionName: "openDispute",
+        args: [bounty.id, buildReviewNoteUri(bounty, "dispute_opened")],
+        chainId: arcTestnet.id
+      });
+
+      await waitForReceipt(hash);
+      await refreshBoard();
+      setActiveReviewBountyId(null);
+      setNotice("Dispute opened. Escrow stays locked until decentralized resolution is introduced.");
     } catch (actionError) {
       setError(getErrorMessage(actionError));
     }
@@ -482,10 +612,6 @@ export function useBountyBoardActions({
     }
   }
 
-  async function approveBounty(bounty: BountyView) {
-    await runBoardAction("approveBounty", bounty, "Approving payout...");
-  }
-
   async function cancelUnclaimedBounty(bounty: BountyView) {
     await runBoardAction("cancelUnclaimedBounty", bounty, "Cancelling expired bounty...");
   }
@@ -507,6 +633,8 @@ export function useBountyBoardActions({
       reputationDrafts,
       reputationReceipts,
       activeReputationBountyId,
+      reviewDrafts,
+      activeReviewBountyId,
       editingBountyId,
       isPostingReputationFor
     },
@@ -517,13 +645,17 @@ export function useBountyBoardActions({
       primeResultFlow,
       primeEditFlow,
       openReputationComposer,
+      openReviewComposer,
       updateReputationDraft,
+      updateReviewDraft,
       handleCreateBounty,
       claimSpecificBounty,
       handleClaimBounty,
       handleSubmitResult,
       handlePostReputation,
       approveBounty,
+      requestChanges,
+      openDispute,
       cancelUnclaimedBounty,
       reclaimExpiredClaim,
       releaseAfterReviewTimeout

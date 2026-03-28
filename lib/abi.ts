@@ -31,6 +31,7 @@ export const arcBountyBoardAbi = [
         components: [
           { name: "creator", type: "address" },
           { name: "claimant", type: "address" },
+          { name: "disputeRaisedBy", type: "address" },
           { name: "agentId", type: "uint256" },
           { name: "payoutAmount", type: "uint128" },
           { name: "claimDeadline", type: "uint64" },
@@ -40,7 +41,9 @@ export const arcBountyBoardAbi = [
           { name: "reviewWindow", type: "uint32" },
           { name: "status", type: "uint8" },
           { name: "metadataURI", type: "string" },
-          { name: "resultURI", type: "string" }
+          { name: "resultURI", type: "string" },
+          { name: "reviewURI", type: "string" },
+          { name: "disputeURI", type: "string" }
         ]
       }
     ]
@@ -96,7 +99,30 @@ export const arcBountyBoardAbi = [
     type: "function",
     name: "approveBounty",
     stateMutability: "nonpayable",
-    inputs: [{ name: "bountyId", type: "uint256" }],
+    inputs: [
+      { name: "bountyId", type: "uint256" },
+      { name: "reviewURI", type: "string" }
+    ],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "requestChanges",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "bountyId", type: "uint256" },
+      { name: "reviewURI", type: "string" }
+    ],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "openDispute",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "bountyId", type: "uint256" },
+      { name: "disputeURI", type: "string" }
+    ],
     outputs: []
   },
   {

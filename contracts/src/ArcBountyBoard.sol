@@ -10,13 +10,16 @@ contract ArcBountyBoard {
         Open,
         Claimed,
         Submitted,
+        RevisionRequested,
         Approved,
+        Disputed,
         Cancelled
     }
 
     struct Bounty {
         address creator;
         address claimant;
+        address disputeRaisedBy;
         uint256 agentId;
         uint128 payoutAmount;
         uint64 claimDeadline;
@@ -27,6 +30,8 @@ contract ArcBountyBoard {
         Status status;
         string metadataURI;
         string resultURI;
+        string reviewURI;
+        string disputeURI;
     }
 
     error InvalidAddress();
@@ -37,6 +42,8 @@ contract ArcBountyBoard {
     error BountyNotOpen();
     error BountyNotClaimed();
     error BountyNotSubmitted();
+    error BountyNotResubmittable();
+    error BountyNotDisputable();
     error DeadlineExpired();
     error DeadlineNotReached();
     error NotCreator();
@@ -66,13 +73,25 @@ contract ArcBountyBoard {
         uint64 reviewDeadline,
         string resultURI
     );
+    event BountyRevisionRequested(
+        uint256 indexed bountyId,
+        address indexed creator,
+        uint64 submissionDeadline,
+        string reviewURI
+    );
     event BountyUpdated(
         uint256 indexed bountyId,
         uint256 payoutAmount,
         uint64 claimDeadline,
         string metadataURI
     );
-    event BountyApproved(uint256 indexed bountyId, address indexed claimant, uint256 payoutAmount);
+    event BountyApproved(
+        uint256 indexed bountyId,
+        address indexed claimant,
+        uint256 payoutAmount,
+        string reviewURI
+    );
+    event BountyDisputed(uint256 indexed bountyId, address indexed raisedBy, string disputeURI);
     event BountyCancelled(uint256 indexed bountyId, address indexed creator);
     event BountyMessagePosted(
         uint256 indexed bountyId,
@@ -179,28 +198,71 @@ contract ArcBountyBoard {
     function submitResult(uint256 bountyId, string calldata resultURI) external {
         Bounty storage bounty = _getBounty(bountyId);
 
-        if (bounty.status != Status.Claimed) revert BountyNotClaimed();
+        if (bounty.status != Status.Claimed && bounty.status != Status.RevisionRequested) {
+            revert BountyNotResubmittable();
+        }
         if (msg.sender != bounty.claimant) revert NotClaimant();
         if (bytes(resultURI).length == 0) revert EmptyURI();
         if (block.timestamp > bounty.submissionDeadline) revert DeadlineExpired();
 
         bounty.resultURI = resultURI;
+        bounty.reviewURI = "";
+        bounty.disputeURI = "";
+        bounty.disputeRaisedBy = address(0);
         bounty.reviewDeadline = uint64(block.timestamp + bounty.reviewWindow);
         bounty.status = Status.Submitted;
 
         emit ResultSubmitted(bountyId, msg.sender, bounty.reviewDeadline, resultURI);
     }
 
-    function approveBounty(uint256 bountyId) external {
+    function approveBounty(uint256 bountyId, string calldata reviewURI) external {
         Bounty storage bounty = _getBounty(bountyId);
 
         if (bounty.status != Status.Submitted) revert BountyNotSubmitted();
         if (msg.sender != bounty.creator) revert NotCreator();
+        if (bytes(reviewURI).length == 0) revert EmptyURI();
 
+        bounty.reviewURI = reviewURI;
+        bounty.disputeURI = "";
+        bounty.disputeRaisedBy = address(0);
         bounty.status = Status.Approved;
         _safeTransfer(stablecoin, bounty.claimant, bounty.payoutAmount);
 
-        emit BountyApproved(bountyId, bounty.claimant, bounty.payoutAmount);
+        emit BountyApproved(bountyId, bounty.claimant, bounty.payoutAmount, reviewURI);
+    }
+
+    function requestChanges(uint256 bountyId, string calldata reviewURI) external {
+        Bounty storage bounty = _getBounty(bountyId);
+
+        if (bounty.status != Status.Submitted) revert BountyNotSubmitted();
+        if (msg.sender != bounty.creator) revert NotCreator();
+        if (bytes(reviewURI).length == 0) revert EmptyURI();
+
+        bounty.reviewURI = reviewURI;
+        bounty.disputeURI = "";
+        bounty.disputeRaisedBy = address(0);
+        bounty.submissionDeadline = uint64(block.timestamp + bounty.submissionWindow);
+        bounty.reviewDeadline = 0;
+        bounty.status = Status.RevisionRequested;
+
+        emit BountyRevisionRequested(bountyId, msg.sender, bounty.submissionDeadline, reviewURI);
+    }
+
+    function openDispute(uint256 bountyId, string calldata disputeURI) external {
+        Bounty storage bounty = _getBounty(bountyId);
+
+        if (bounty.status != Status.Submitted && bounty.status != Status.RevisionRequested) {
+            revert BountyNotDisputable();
+        }
+        if (bytes(disputeURI).length == 0) revert EmptyURI();
+        if (msg.sender != bounty.creator && msg.sender != bounty.claimant) revert NotParticipant();
+
+        bounty.disputeURI = disputeURI;
+        bounty.disputeRaisedBy = msg.sender;
+        bounty.reviewDeadline = 0;
+        bounty.status = Status.Disputed;
+
+        emit BountyDisputed(bountyId, msg.sender, disputeURI);
     }
 
     function postBountyMessage(uint256 bountyId, string calldata messageURI) external {
@@ -228,7 +290,9 @@ contract ArcBountyBoard {
     function reclaimExpiredClaim(uint256 bountyId) external {
         Bounty storage bounty = _getBounty(bountyId);
 
-        if (bounty.status != Status.Claimed) revert BountyNotClaimed();
+        if (bounty.status != Status.Claimed && bounty.status != Status.RevisionRequested) {
+            revert BountyNotClaimed();
+        }
         if (msg.sender != bounty.creator) revert NotCreator();
         if (block.timestamp <= bounty.submissionDeadline) revert DeadlineNotReached();
 
@@ -244,10 +308,11 @@ contract ArcBountyBoard {
         if (bounty.status != Status.Submitted) revert BountyNotSubmitted();
         if (block.timestamp <= bounty.reviewDeadline) revert DeadlineNotReached();
 
+        bounty.reviewURI = "";
         bounty.status = Status.Approved;
         _safeTransfer(stablecoin, bounty.claimant, bounty.payoutAmount);
 
-        emit BountyApproved(bountyId, bounty.claimant, bounty.payoutAmount);
+        emit BountyApproved(bountyId, bounty.claimant, bounty.payoutAmount, "");
     }
 
     function getBounty(uint256 bountyId) external view returns (Bounty memory) {

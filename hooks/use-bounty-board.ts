@@ -77,6 +77,7 @@ export function useBountyBoard() {
   const resultForm = boardActions.state.resultForm;
   const editingBountyId = boardActions.state.editingBountyId;
   const activeDiscussionBountyId = discussion.state.activeDiscussionBountyId;
+  const activeReviewBountyId = boardActions.state.activeReviewBountyId;
 
   const selectedAgent =
     boardData.ownedAgents.find((agent) => agent.agentId.toString() === claimForm.agentId) ?? null;
@@ -146,6 +147,7 @@ export function useBountyBoard() {
       activeDiscussionMessages,
       activeAgentCount,
       reputationByAgent: boardData.reputationByAgent,
+      reviewDrafts: boardActions.state.reviewDrafts,
       reputationDrafts: boardActions.state.reputationDrafts,
       reputationReceipts: boardActions.state.reputationReceipts
     },
@@ -172,6 +174,7 @@ export function useBountyBoard() {
       isFormatMenuOpen: discussion.state.isFormatMenuOpen,
       isAttachmentMenuOpen: discussion.state.isAttachmentMenuOpen,
       activeReputationBountyId: boardActions.state.activeReputationBountyId,
+      activeReviewBountyId,
       activeDiscussionBountyId,
       agentLookupError: uiData.agentLookupError,
       discussionTextareaRef: discussion.state.discussionTextareaRef
@@ -188,6 +191,7 @@ export function useBountyBoard() {
       primeClaimFlow: boardActions.actions.primeClaimFlow,
       primeResultFlow: boardActions.actions.primeResultFlow,
       primeEditFlow: boardActions.actions.primeEditFlow,
+      openReviewComposer: boardActions.actions.openReviewComposer,
       openDiscussion: discussion.actions.openDiscussion,
       closeDiscussion: discussion.actions.closeDiscussion,
       updateDiscussionDraft: discussion.actions.updateDiscussionDraft,
@@ -203,8 +207,11 @@ export function useBountyBoard() {
       reclaimExpiredClaim: boardActions.actions.reclaimExpiredClaim,
       releaseAfterReviewTimeout: boardActions.actions.releaseAfterReviewTimeout,
       openReputationComposer: boardActions.actions.openReputationComposer,
+      updateReviewDraft: boardActions.actions.updateReviewDraft,
       updateReputationDraft: boardActions.actions.updateReputationDraft,
       handlePostReputation: boardActions.actions.handlePostReputation,
+      requestChanges: boardActions.actions.requestChanges,
+      openDispute: boardActions.actions.openDispute,
       handlePostMessage: discussion.actions.handlePostMessage,
       toggleFormatMenu: discussion.actions.toggleFormatMenu,
       toggleAttachmentMenu: discussion.actions.toggleAttachmentMenu

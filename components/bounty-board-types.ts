@@ -2,7 +2,15 @@ import type { Address } from "viem";
 
 export type BoardTab = "board" | "about" | "roadmap";
 
-export type BoardStatusFilter = "all" | "open" | "claimed" | "submitted" | "approved" | "cancelled";
+export type BoardStatusFilter =
+  | "all"
+  | "open"
+  | "claimed"
+  | "submitted"
+  | "revision_requested"
+  | "approved"
+  | "disputed"
+  | "cancelled";
 
 export type BoardScopeFilter = "all" | "open" | "created" | "claimed" | "action";
 
@@ -12,6 +20,7 @@ export type BountyView = {
   id: bigint;
   creator: Address;
   claimant: Address;
+  disputeRaisedBy: Address;
   agentId: bigint;
   payoutAmount: bigint;
   claimDeadline: bigint;
@@ -22,6 +31,10 @@ export type BountyView = {
   status: number;
   metadataURI: string;
   resultURI: string;
+  reviewURI: string;
+  reviewNote: string;
+  disputeURI: string;
+  disputeNote: string;
   title: string;
   summary: string;
   contact: string;
@@ -42,6 +55,10 @@ export type ReputationDraft = {
   score: string;
   tag1: string;
   tag2: string;
+  note: string;
+};
+
+export type ReviewDraft = {
   note: string;
 };
 

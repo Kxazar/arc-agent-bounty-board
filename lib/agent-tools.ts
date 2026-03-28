@@ -10,6 +10,7 @@ const messageLogChunk = 8_000n;
 export type BountyResult = {
   creator: Address;
   claimant: Address;
+  disputeRaisedBy: Address;
   agentId: bigint;
   payoutAmount: bigint;
   claimDeadline: bigint;
@@ -20,6 +21,8 @@ export type BountyResult = {
   status: number;
   metadataURI: string;
   resultURI: string;
+  reviewURI: string;
+  disputeURI: string;
 };
 
 export type OwnedAgent = {
@@ -49,6 +52,12 @@ export type BountyMessage = {
 type AgentMetadata = {
   name?: string;
   description?: string;
+};
+
+type BountyNotePayload = {
+  kind?: string;
+  note?: string;
+  createdAt?: string;
 };
 
 function normalizeOptionalText(value: string | null | undefined) {
@@ -97,6 +106,32 @@ export function buildMetadataUri(input: {
   };
 
   return `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(payload))}`;
+}
+
+export function buildBountyNoteUri(input: {
+  kind: "review_passed" | "changes_requested" | "dispute_opened";
+  note: string;
+}) {
+  const payload = {
+    kind: input.kind,
+    note: input.note.trim(),
+    createdAt: new Date().toISOString()
+  };
+
+  return `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(payload))}`;
+}
+
+export function parseBountyNoteUri(uri: string) {
+  const payload = parseEmbeddedJsonUri(uri) as BountyNotePayload | null;
+
+  if (!payload) {
+    return null;
+  }
+
+  return {
+    kind: payload.kind ?? "",
+    note: payload.note ?? ""
+  };
 }
 
 export function buildMessageUri(input: {

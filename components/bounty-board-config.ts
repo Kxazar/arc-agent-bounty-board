@@ -1,6 +1,14 @@
 import type { CreateForm } from "@/components/bounty-board-types";
 
-export const statusLabels = ["Open", "Claimed", "Submitted", "Approved", "Cancelled"] as const;
+export const statusLabels = [
+  "Open",
+  "Claimed",
+  "Submitted",
+  "Changes requested",
+  "Approved",
+  "Disputed",
+  "Cancelled"
+] as const;
 
 export const externalLinkProps = {
   target: "_blank",

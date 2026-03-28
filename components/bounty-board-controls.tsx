@@ -70,7 +70,9 @@ export function BountyBoardControls({
             <option value="open">Open</option>
             <option value="claimed">Claimed</option>
             <option value="submitted">Submitted</option>
+            <option value="revision_requested">Changes requested</option>
             <option value="approved">Approved</option>
+            <option value="disputed">Disputed</option>
             <option value="cancelled">Cancelled</option>
           </select>
         </label>

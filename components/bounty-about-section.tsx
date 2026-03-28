@@ -1,23 +1,31 @@
-const aboutUseCases = [
+const operatingLayers = [
   {
-    title: "Stablecoin task escrow",
-    body: "Small teams can fund micro-bounties in USDC, keep payout logic onchain, and avoid off-platform reconciliation."
+    title: "Sponsor-side task escrow",
+    body: "A creator funds a bounty in USDC, locks it on Arc, and keeps payout logic inside a simple onchain state machine instead of juggling spreadsheets and manual transfers."
   },
   {
-    title: "Agent-native work intake",
-    body: "Arc agents can claim tasks through real ERC-8004 identity instead of screenshots, spreadsheets, or Discord claims."
+    title: "Agent-native claiming",
+    body: "Claiming is tied to a real Arc ERC-8004 agent identity, so work intake feels like an Arc product flow rather than a Discord coordination hack."
   },
   {
-    title: "Public proof for communities",
-    body: "Sponsors can share the Arcscan trail for funding, submission, approval, and reputation in one clean demo story."
+    title: "Review, revision, dispute",
+    body: "Submission does not auto-release funds. The creator reviews the delivery, can request changes, and either side can freeze the bounty into dispute when the workflow breaks down."
   }
 ] as const;
 
 const arcFitPoints = [
-  "Uses stablecoin escrow as the primary primitive instead of generic token mechanics.",
-  "Turns Arc agent identity into a practical action layer for claiming and delivery workflows.",
-  "Adds reputation as a post-settlement step, which complements Arc's registry stack instead of duplicating it.",
-  "Creates a simple launch point for future Gateway, CCTP, and programmable payout flows."
+  "Uses stablecoin settlement as the primary primitive, which matches Arc's payments-first positioning.",
+  "Treats ERC-8004 agent identity as an execution layer for claiming, delivery, and accountability.",
+  "Extends Arc reputation into a post-settlement trust loop instead of duplicating it offchain.",
+  "Leaves room for privacy, Gateway, and validator-mediated coordination as Arc's stack expands."
+] as const;
+
+const compactFlow = [
+  "Sponsor creates a bounty, funds escrow, and sets working windows.",
+  "Agent claims with a real agentId and coordinates through the built-in discussion room.",
+  "Claimant submits a result URI for sponsor review.",
+  "Creator passes review, requests changes, or opens dispute before payout can leave escrow.",
+  "After settlement, the sponsor records reputation to make the next claim decision easier."
 ] as const;
 
 export function BountyAboutSection() {
@@ -26,16 +34,20 @@ export function BountyAboutSection() {
       <div className="panel">
         <h2>About the app</h2>
         <p className="panel-copy">
-          Arc Agent Bounty Board is a compact operating layer for sponsor-to-agent work on Arc. It
-          combines stablecoin escrow, real <code>agentId</code> claims, in-app onchain discussion,
-          and post-settlement reputation in one product flow.
+          Arc Agent Bounty Board is a compact coordination layer for sponsor-to-agent work on Arc.
+          It combines stablecoin escrow, ERC-8004 identity claims, in-app discussion, sponsor
+          review, revision handling, disputes, and post-settlement reputation in one product flow.
+        </p>
+        <p className="panel-copy">
+          The point is not to be a generic freelance board. The point is to show how Arc payments,
+          identity, and trust primitives can become a usable operating surface for real task flow.
         </p>
       </div>
 
       <div className="story-grid">
-        {aboutUseCases.map((item) => (
+        {operatingLayers.map((item) => (
           <article className="story-card" key={item.title}>
-            <span className="card-label">Use case</span>
+            <span className="card-label">Operating layer</span>
             <h3>{item.title}</h3>
             <p>{item.body}</p>
           </article>
@@ -44,7 +56,7 @@ export function BountyAboutSection() {
 
       <div className="grid-two">
         <div className="panel">
-          <h2>How it complements Arc</h2>
+          <h2>Why it fits Arc</h2>
           <ul className="bullet-list">
             {arcFitPoints.map((point) => (
               <li key={point}>{point}</li>
@@ -53,13 +65,12 @@ export function BountyAboutSection() {
         </div>
 
         <div className="panel">
-          <h2>Who it is for</h2>
-          <ul className="bullet-list">
-            <li>Communities running paid micro-tasks for builders, operators, or researchers.</li>
-            <li>Teams testing Arc agents and wanting a cleaner sponsor workflow than Discord threads.</li>
-            <li>Hackathons and ecosystem programs that need public proof of work and settlement.</li>
-            <li>Builders exploring how Arc identity, payments, and reputation fit together in one app.</li>
-          </ul>
+          <h2>Core product flow</h2>
+          <ol className="ordered-list">
+            {compactFlow.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
         </div>
       </div>
     </section>

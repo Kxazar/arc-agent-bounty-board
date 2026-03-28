@@ -2,7 +2,14 @@ import type { Address } from "viem";
 import { zeroAddress } from "viem";
 
 import { externalLinkProps, statusLabels } from "@/components/bounty-board-config";
-import type { BountyView, ReputationDraft, SponsorTrustSummary, TrustTone } from "@/components/bounty-board-types";
+import type {
+  BountyView,
+  ReputationDraft,
+  ReviewDraft,
+  SponsorTrustSummary,
+  TrustTone
+} from "@/components/bounty-board-types";
+import { BountyReviewPanel } from "@/components/bounty-review-panel";
 import { ReputationComposer } from "@/components/reputation-composer";
 import { formatReputation, type ReputationSummary } from "@/lib/agent-tools";
 import { explorerAddressLink, formatDateTime, formatUsdc, shortenAddress } from "@/lib/format";
@@ -16,8 +23,10 @@ interface BountyCardProps {
   selectedClaimAgentId: string;
   reputation?: ReputationSummary;
   sponsorTrust?: SponsorTrustSummary;
+  reviewDraft: ReviewDraft;
   reputationDraft: ReputationDraft;
   isComposerOpen: boolean;
+  isReviewOpen: boolean;
   isDiscussionOpen: boolean;
   isWriting: boolean;
   isSwitching: boolean;
@@ -32,12 +41,16 @@ interface BountyCardProps {
   onRecoverAfterMissedSubmit: (bounty: BountyView) => void | Promise<void>;
   onReleaseAfterTimeout: (bounty: BountyView) => void | Promise<void>;
   onOpenDiscussion: (bounty: BountyView) => void | Promise<void>;
+  onOpenReviewComposer: (bounty: BountyView) => void;
   onOpenReputationComposer: (bounty: BountyView) => void;
+  onUpdateReviewDraft: (bountyId: string, bountyTitle: string, updater: (draft: ReviewDraft) => ReviewDraft) => void;
   onUpdateReputationDraft: (
     bountyId: string,
     bountyTitle: string,
     updater: (draft: ReputationDraft) => ReputationDraft
   ) => void;
+  onRequestChanges: (bounty: BountyView) => void | Promise<void>;
+  onOpenDispute: (bounty: BountyView) => void | Promise<void>;
   onSubmitReputation: (bounty: BountyView) => void | Promise<void>;
 }
 
@@ -75,6 +88,10 @@ function getRelevantWindow(bounty: BountyView) {
 
   if (bounty.status === 2) {
     return { label: "Review window", value: bounty.reviewDeadline };
+  }
+
+  if (bounty.status === 3) {
+    return { label: "Revision due", value: bounty.submissionDeadline };
   }
 
   return null;
@@ -186,13 +203,13 @@ function getNextActionCopy({
       return windowExpired
         ? {
             tone: "warning" as NextActionTone,
-            title: "Review timeout is over. Approval should happen immediately.",
-            detail: "The claimant can release the payout after timeout, so this is the moment to approve or resolve in discussion."
+            title: "Review timeout is over. Decide now or the claimant can release escrow.",
+            detail: "Pass review, request changes, or move the bounty into dispute before the inactive path settles it."
           }
         : {
             tone: "ready" as NextActionTone,
-            title: "Review the deliverable and approve the payout.",
-            detail: "This is the sponsor-side moment that closes the escrow and moves the bounty into reputation."
+            title: "Review the delivery before any payout leaves escrow.",
+            detail: "This is the sponsor-side gate: pass review, request changes, or escalate into dispute."
           };
     }
 
@@ -206,18 +223,48 @@ function getNextActionCopy({
         : {
             tone: "neutral" as NextActionTone,
             title: "Waiting for sponsor review.",
-            detail: "The result is already submitted. Keep the discussion channel open in case the sponsor needs clarification."
+            detail: "The result is already submitted. Keep the discussion channel open while the sponsor reviews it."
           };
     }
 
     return {
       tone: "neutral" as NextActionTone,
       title: "Submission is under sponsor review.",
-      detail: "The next state change will be payout approval or timeout-based release."
+      detail: "The next state change will be review approval, requested changes, dispute, or timeout-based release."
     };
   }
 
   if (bounty.status === 3) {
+    if (isClaimant) {
+      return windowExpired
+        ? {
+            tone: "warning" as NextActionTone,
+            title: "Revision deadline has lapsed for the claimant.",
+            detail: "Either resubmit immediately if still possible or expect the sponsor to recover escrow after the missed revision window."
+          }
+        : {
+            tone: "ready" as NextActionTone,
+            title: "The sponsor requested changes before payout.",
+            detail: "Revise and resubmit, or open dispute if the review is not aligned with the agreed scope."
+          };
+    }
+
+    if (isCreator) {
+      return {
+        tone: "neutral" as NextActionTone,
+        title: "Revision request is out with the claimant.",
+        detail: "Escrow stays locked while you wait for a new submission or a claimant-side dispute."
+      };
+    }
+
+    return {
+      tone: "neutral" as NextActionTone,
+      title: "This bounty is in a revision cycle.",
+      detail: "The last submission did not pass sponsor review and is waiting for an updated delivery."
+    };
+  }
+
+  if (bounty.status === 4) {
     if (isCreator) {
       return {
         tone: "ready" as NextActionTone,
@@ -238,6 +285,14 @@ function getNextActionCopy({
       tone: "neutral" as NextActionTone,
       title: "This bounty has been completed on Arc.",
       detail: "Settlement is done and the remaining product loop is reputation and discoverability."
+    };
+  }
+
+  if (bounty.status === 5) {
+    return {
+      tone: "warning" as NextActionTone,
+      title: "A dispute is open and the payout is frozen.",
+      detail: "Discussion can continue inside the product, but decentralized dispute resolution is still a planned Arc-native milestone."
     };
   }
 
@@ -264,6 +319,22 @@ function getAgentTrustBadge(reputation?: ReputationSummary): { label: string; to
   return { label: "Emerging agent", tone: "neutral" };
 }
 
+function disputeAuthorLabel(bounty: BountyView) {
+  if (bounty.disputeRaisedBy === zeroAddress) {
+    return "participant";
+  }
+
+  if (bounty.disputeRaisedBy.toLowerCase() === bounty.creator.toLowerCase()) {
+    return "creator";
+  }
+
+  if (bounty.disputeRaisedBy.toLowerCase() === bounty.claimant.toLowerCase()) {
+    return "claimant";
+  }
+
+  return "participant";
+}
+
 export function BountyCard({
   bounty,
   connectedAddress,
@@ -271,8 +342,10 @@ export function BountyCard({
   selectedClaimAgentId,
   reputation,
   sponsorTrust,
+  reviewDraft,
   reputationDraft,
   isComposerOpen,
+  isReviewOpen,
   isDiscussionOpen,
   isWriting,
   isSwitching,
@@ -287,8 +360,12 @@ export function BountyCard({
   onRecoverAfterMissedSubmit,
   onReleaseAfterTimeout,
   onOpenDiscussion,
+  onOpenReviewComposer,
   onOpenReputationComposer,
+  onUpdateReviewDraft,
   onUpdateReputationDraft,
+  onRequestChanges,
+  onOpenDispute,
   onSubmitReputation
 }: BountyCardProps) {
   const bountyKey = bounty.id.toString();
@@ -323,7 +400,7 @@ export function BountyCard({
           <div className="card-label">#{bountyKey}</div>
           <h3>{bounty.title}</h3>
         </div>
-        <span className={`status-pill status-${statusLabels[bounty.status]?.toLowerCase() ?? "unknown"}`}>
+        <span className={`status-pill status-${(statusLabels[bounty.status] ?? "unknown").toLowerCase().replaceAll(" ", "-")}`}>
           {statusLabels[bounty.status] ?? "Unknown"}
         </span>
       </div>
@@ -353,7 +430,7 @@ export function BountyCard({
             <span className={`trust-badge trust-${sponsorTrust.tone}`}>{sponsorTrust.badge}</span>
             <span>
               Sponsor settled {sponsorTrust.settledCount}
-              {sponsorTrust.totalPaidOut > 0n ? ` • ${formatUsdc(sponsorTrust.totalPaidOut)} paid` : ""}
+              {sponsorTrust.totalPaidOut > 0n ? ` | ${formatUsdc(sponsorTrust.totalPaidOut)} paid` : ""}
             </span>
           </div>
         ) : (
@@ -415,6 +492,20 @@ export function BountyCard({
         </div>
       ) : null}
 
+      {bounty.reviewNote ? (
+        <div className="review-note-panel">
+          <span className="card-label">Latest review note</span>
+          <p>{bounty.reviewNote}</p>
+        </div>
+      ) : null}
+
+      {bounty.disputeNote ? (
+        <div className="dispute-note-panel">
+          <span className="card-label">Dispute opened by {disputeAuthorLabel(bounty)}</span>
+          <p>{bounty.disputeNote}</p>
+        </div>
+      ) : null}
+
       <div className="card-footer">
         <div className="card-links">
           <a {...externalLinkProps} href={bounty.metadataURI}>
@@ -452,15 +543,9 @@ export function BountyCard({
             </button>
           ) : null}
 
-          {bounty.status === 1 && isClaimant ? (
+          {(bounty.status === 1 || bounty.status === 3) && isClaimant ? (
             <button className="button button-secondary" onClick={() => onPrimeSubmit(bounty.id)} type="button">
-              Prepare submit
-            </button>
-          ) : null}
-
-          {bounty.status === 2 && isCreator ? (
-            <button className="button button-primary" disabled={isWriting} onClick={() => onApprove(bounty)} type="button">
-              Approve payout
+              {bounty.status === 3 ? "Prepare resubmit" : "Prepare submit"}
             </button>
           ) : null}
 
@@ -475,7 +560,7 @@ export function BountyCard({
             </button>
           ) : null}
 
-          {bounty.status === 1 && isCreator ? (
+          {(bounty.status === 1 || bounty.status === 3) && isCreator ? (
             <button
               className="button button-ghost"
               disabled={isWriting}
@@ -505,7 +590,26 @@ export function BountyCard({
         </div>
       </div>
 
-      {bounty.status === 3 && bounty.agentId > 0n ? (
+      <BountyReviewPanel
+        bounty={bounty}
+        draft={reviewDraft}
+        isClaimant={isClaimant}
+        isCreator={isCreator}
+        isOpen={isReviewOpen}
+        isWriting={isWriting}
+        onApprove={() => onApprove(bounty)}
+        onNoteChange={(value) =>
+          onUpdateReviewDraft(bountyKey, bounty.title, (current) => ({
+            ...current,
+            note: value
+          }))
+        }
+        onOpen={() => onOpenReviewComposer(bounty)}
+        onOpenDispute={() => onOpenDispute(bounty)}
+        onRequestChanges={() => onRequestChanges(bounty)}
+      />
+
+      {bounty.status === 4 && bounty.agentId > 0n ? (
         <ReputationComposer
           draft={reputationDraft}
           isOpen={isComposerOpen}

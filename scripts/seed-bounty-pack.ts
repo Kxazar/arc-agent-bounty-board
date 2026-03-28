@@ -29,7 +29,7 @@ const seedBounties = [
     title: "Summarize Discord onboarding feedback",
     summary: "Review a short batch of onboarding notes and turn them into three product fixes.",
     contact: "marin.ops",
-    reward: "0.65"
+    reward: "0.58"
   },
   {
     title: "Draft a support macro pack",
@@ -83,7 +83,7 @@ const seedBounties = [
     title: "Turn bounty notes into FAQ",
     summary: "Convert raw sponsor notes into a short FAQ for new claimants entering the board.",
     contact: "kian.field",
-    reward: "0.7"
+    reward: "0.5"
   }
 ] as const;
 
@@ -151,7 +151,19 @@ async function main() {
   }
 
   const payouts = seedBounties.map((item) => parseUnits(item.reward, 6));
-  const totalPayout = payouts.reduce((sum, value) => sum + value, 0n);
+  const existingBountyCount = (await publicClient.readContract({
+    address: boardAddress,
+    abi: arcBountyBoardAbi,
+    functionName: "nextBountyId"
+  })) as bigint;
+  const remainingBounties = seedBounties.slice(Number(existingBountyCount));
+  const remainingPayouts = payouts.slice(Number(existingBountyCount));
+  const totalPayout = remainingPayouts.reduce((sum, value) => sum + value, 0n);
+
+  if (remainingBounties.length === 0) {
+    console.log("Seed pack already exists on this board.");
+    return;
+  }
 
   const balance = (await publicClient.readContract({
     address: stablecoin,
@@ -188,7 +200,7 @@ async function main() {
     console.log(`Approve tx: ${arcTestnet.blockExplorers.default.url}/tx/${approveHash}`);
   }
 
-  for (const [index, bounty] of seedBounties.entries()) {
+  for (const [index, bounty] of remainingBounties.entries()) {
     const createHash = await walletClient.writeContract({
       address: boardAddress,
       abi: arcBountyBoardAbi,
@@ -199,8 +211,8 @@ async function main() {
           summary: bounty.summary,
           contact: bounty.contact
         }),
-        payouts[index],
-        24 * 3600,
+        remainingPayouts[index],
+        120 * 24 * 3600,
         48 * 3600,
         24 * 3600
       ],
@@ -210,7 +222,7 @@ async function main() {
     });
 
     await publicClient.waitForTransactionReceipt({ hash: createHash });
-    console.log(`${index + 1}. ${bounty.title}`);
+    console.log(`${Number(existingBountyCount) + index + 1}. ${bounty.title}`);
     console.log(`   tx: ${arcTestnet.blockExplorers.default.url}/tx/${createHash}`);
   }
 }

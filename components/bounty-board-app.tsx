@@ -54,8 +54,10 @@ const statusCodeByFilter: Record<Exclude<BoardStatusFilter, "all">, number> = {
   open: 0,
   claimed: 1,
   submitted: 2,
-  approved: 3,
-  cancelled: 4
+  revision_requested: 3,
+  approved: 4,
+  disputed: 5,
+  cancelled: 6
 };
 
 function describeCompactDeadline(timestamp: bigint) {
@@ -108,10 +110,10 @@ function buildSponsorTrustMap(bounties: BountyView[]) {
 
     current.totalCreated += 1;
 
-    if (bounty.status === 3) {
+    if (bounty.status === 4) {
       current.settledCount += 1;
       current.totalPaidOut += bounty.payoutAmount;
-    } else if (bounty.status === 4) {
+    } else if (bounty.status === 6) {
       current.cancelledCount += 1;
     } else {
       current.liveCount += 1;
@@ -209,6 +211,7 @@ function getActiveDeadlineValue(bounty: BountyView) {
   if (bounty.status === 0) return bounty.claimDeadline;
   if (bounty.status === 1) return bounty.submissionDeadline;
   if (bounty.status === 2) return bounty.reviewDeadline;
+  if (bounty.status === 3) return bounty.submissionDeadline;
   return 0n;
 }
 
@@ -221,7 +224,9 @@ function isActionNeededForAddress(bounty: BountyView, lowerAddress?: string) {
   if (bounty.status === 0) return !isCreator;
   if (bounty.status === 1) return isClaimant;
   if (bounty.status === 2) return isCreator || isClaimant;
-  if (bounty.status === 3) return isCreator;
+  if (bounty.status === 3) return isCreator || isClaimant;
+  if (bounty.status === 4) return isCreator;
+  if (bounty.status === 5) return isCreator || isClaimant;
   return false;
 }
 
@@ -266,6 +271,7 @@ export function BountyBoardApp() {
     activeDiscussionDraft,
     activeDiscussionMessages,
     activeAgentCount,
+    reviewDrafts,
     reputationByAgent,
     reputationDrafts,
     reputationReceipts
@@ -286,6 +292,7 @@ export function BountyBoardApp() {
     isFormatMenuOpen,
     isAttachmentMenuOpen,
     activeReputationBountyId,
+    activeReviewBountyId,
     activeDiscussionBountyId,
     agentLookupError,
     discussionTextareaRef
@@ -298,6 +305,7 @@ export function BountyBoardApp() {
     primeClaimFlow,
     primeResultFlow,
     primeEditFlow,
+    openReviewComposer,
     openDiscussion,
     closeDiscussion,
     updateDiscussionDraft,
@@ -309,10 +317,13 @@ export function BountyBoardApp() {
     handleClaimBounty,
     handleSubmitResult,
     approveBounty,
+    requestChanges,
+    openDispute,
     cancelUnclaimedBounty,
     reclaimExpiredClaim,
     releaseAfterReviewTimeout,
     openReputationComposer,
+    updateReviewDraft,
     updateReputationDraft,
     handlePostReputation,
     handlePostMessage,
@@ -340,6 +351,8 @@ export function BountyBoardApp() {
         bounty.title,
         bounty.summary,
         bounty.contact,
+        bounty.reviewNote,
+        bounty.disputeNote,
         bounty.agentId === 0n ? "" : bounty.agentId.toString()
       ]
         .join(" ")
@@ -385,10 +398,10 @@ export function BountyBoardApp() {
   const agentTrustEntries = buildAgentTrustEntries(reputationByAgent);
   const featuredBounties = buildFeaturedBounties(bounties, sponsorTrustByCreator);
   const liveEscrow = bounties
-    .filter((bounty) => bounty.status === 0 || bounty.status === 1 || bounty.status === 2)
+    .filter((bounty) => bounty.status === 0 || bounty.status === 1 || bounty.status === 2 || bounty.status === 3 || bounty.status === 5)
     .reduce((sum, bounty) => sum + bounty.payoutAmount, 0n);
   const settledVolume = bounties
-    .filter((bounty) => bounty.status === 3)
+    .filter((bounty) => bounty.status === 4)
     .reduce((sum, bounty) => sum + bounty.payoutAmount, 0n);
   const hasActiveBoardFilters =
     normalizedSearch !== "" || statusFilter !== "all" || scopeFilter !== "all" || sortBy !== "newest";
@@ -422,7 +435,8 @@ export function BountyBoardApp() {
             <h1>Arc Agent Bounty Board</h1>
             <p className="lede">
               A compact marketplace where sponsors lock USDC in escrow, Arc agents claim work
-              through ERC-8004 identity, and payouts settle on Arc Testnet in a single clean flow.
+              through ERC-8004 identity, pass sponsor review, and settle on Arc Testnet in a single
+              clean flow.
             </p>
 
             <div className="hero-actions">
@@ -467,8 +481,8 @@ export function BountyBoardApp() {
               </div>
               <div className="hero-band-card">
                 <span className="card-label">03</span>
-                <strong>Settle plus reputation</strong>
-                <p>Approval becomes a complete story: release funds, then write an onchain reputation note.</p>
+                <strong>Review, settle, build trust</strong>
+                <p>Creators review submissions before payout, can request changes or dispute, then close with reputation.</p>
               </div>
             </div>
           </div>
@@ -633,6 +647,7 @@ export function BountyBoardApp() {
             <MyBountiesWorkspace
               myBounties={myBounties}
               onEditBounty={primeEditFlow}
+              onOpenReview={openReviewComposer}
               onOpenDiscussion={(bounty) => {
                 void openDiscussion(bounty);
               }}
@@ -694,6 +709,7 @@ export function BountyBoardApp() {
                       bounty={bounty}
                       connectedAddress={address}
                       isComposerOpen={activeReputationBountyId === bountyKey}
+                      isReviewOpen={activeReviewBountyId === bountyKey}
                       isDiscussionOpen={activeDiscussionBountyId === bountyKey}
                       isPostingReputation={isPostingReputationFor === bountyKey}
                       isSwitching={isSwitching}
@@ -701,6 +717,7 @@ export function BountyBoardApp() {
                       key={bountyKey}
                       ownedAgentCount={ownedAgents.length}
                       reputation={bounty.agentId > 0n ? reputationByAgent[bounty.agentId.toString()] : undefined}
+                      reviewDraft={reviewDrafts[bountyKey] ?? { note: `Reviewing "${bounty.title}" on Arc.` }}
                       reputationDraft={reputationDrafts[bountyKey] ?? fallbackReputationDraft(bounty.title)}
                       reputationReceipt={reputationReceipts[bountyKey]}
                       selectedClaimAgentId={claimForm.agentId}
@@ -714,6 +731,10 @@ export function BountyBoardApp() {
                       onOpenDiscussion={(targetBounty) => {
                         void openDiscussion(targetBounty);
                       }}
+                      onOpenDispute={(targetBounty) => {
+                        void openDispute(targetBounty);
+                      }}
+                      onOpenReviewComposer={openReviewComposer}
                       onOpenReputationComposer={openReputationComposer}
                       onPrimeClaim={primeClaimFlow}
                       onPrimeEdit={primeEditFlow}
@@ -724,12 +745,16 @@ export function BountyBoardApp() {
                       onRecoverAfterMissedSubmit={(targetBounty) => {
                         void reclaimExpiredClaim(targetBounty);
                       }}
+                      onRequestChanges={(targetBounty) => {
+                        void requestChanges(targetBounty);
+                      }}
                       onReleaseAfterTimeout={(targetBounty) => {
                         void releaseAfterReviewTimeout(targetBounty);
                       }}
                       onSubmitReputation={(targetBounty) => {
                         void handlePostReputation(targetBounty);
                       }}
+                      onUpdateReviewDraft={updateReviewDraft}
                       onUpdateReputationDraft={updateReputationDraft}
                     />
                   );
@@ -746,7 +771,7 @@ export function BountyBoardApp() {
                 <li>Pick one of the seeded bounty cards or create your own task.</li>
                 <li>Claim it with a registered Arc agent ID.</li>
                 <li>Use the built-in discussion room to align with the sponsor inside the app.</li>
-                <li>Submit a result link, approve the payout, and record reputation.</li>
+                <li>Submit a result link, pass sponsor review or iterate on revisions, then record reputation.</li>
               </ol>
             </div>
 
