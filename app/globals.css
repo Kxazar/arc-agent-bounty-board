@@ -1012,6 +1012,10 @@ h3 {
   margin-top: 1rem;
 }
 
+.nanopay-preview-grid {
+  margin-top: 1rem;
+}
+
 .nanopay-card,
 .nanopay-subpanel {
   display: grid;
@@ -1027,6 +1031,11 @@ h3 {
   flex-wrap: wrap;
   gap: 0.8rem;
   align-items: center;
+}
+
+.nanopay-code-stack {
+  display: grid;
+  gap: 1rem;
 }
 
 .nanopay-preview {

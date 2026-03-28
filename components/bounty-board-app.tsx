@@ -6,7 +6,7 @@ import { formatUnits } from "viem";
 
 import { BountyAboutSection } from "@/components/bounty-about-section";
 import { BountyCard } from "@/components/bounty-card";
-import { externalLinkProps } from "@/components/bounty-board-config";
+import { externalLinkProps, statusLabels } from "@/components/bounty-board-config";
 import { BountyBoardControls } from "@/components/bounty-board-controls";
 import { BountyBoardReadiness } from "@/components/bounty-board-readiness";
 import { BountyClaimStudio } from "@/components/bounty-claim-studio";
@@ -383,6 +383,14 @@ export function BountyBoardApp() {
   const openCount = bounties.filter((bounty) => bounty.status === 0).length;
   const reviewQueueCount = bounties.filter((bounty) => bounty.status === 2 || bounty.status === 3 || bounty.status === 5).length;
   const actionNeededCount = bounties.filter((bounty) => isActionNeededForAddress(bounty, normalizedAddress)).length;
+  const briefTargets = bounties
+    .filter((bounty) => bounty.status !== 6)
+    .slice(0, 8)
+    .map((bounty) => ({
+      id: bounty.id.toString(),
+      title: bounty.title,
+      statusLabel: statusLabels[bounty.status] ?? "Unknown"
+    }));
   const sponsorTrustByCreator = buildSponsorTrustMap(bounties);
   const topSponsors = Object.values(sponsorTrustByCreator)
     .sort((left, right) => {
@@ -589,6 +597,7 @@ export function BountyBoardApp() {
 
           <NanopaymentsPanel
             bountyBoardAddress={hasBountyBoardAddress ? bountyBoardAddress : undefined}
+            briefTargets={briefTargets}
             disputedCount={bounties.filter((bounty) => bounty.status === 5).length}
             openCount={openCount}
             reviewQueueCount={reviewQueueCount}

@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { NextRequestAdapter, toNextResponse } from "@/lib/nanopayment-http";
 import {
   createNanopaymentRequestContext,
-  getMarketSignalHttpServer,
-  getPremiumMarketSignalPayload
+  getIntakeBriefHttpServer,
+  getPremiumIntakeBriefPayload
 } from "@/lib/nanopayments";
-import { NextRequestAdapter, toNextResponse } from "@/lib/nanopayment-http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const httpServer = await getMarketSignalHttpServer();
+    const httpServer = await getIntakeBriefHttpServer();
     const adapter = new NextRequestAdapter(request);
     const context = createNanopaymentRequestContext(adapter, request.nextUrl.pathname, request.method);
     const processResult = await httpServer.processHTTPRequest(context, {
@@ -25,7 +25,10 @@ export async function GET(request: NextRequest) {
       return toNextResponse(processResult.response);
     }
 
-    const payload = await getPremiumMarketSignalPayload();
+    const payload = await getPremiumIntakeBriefPayload({
+      bountyId: request.nextUrl.searchParams.get("bountyId"),
+      agentId: request.nextUrl.searchParams.get("agentId")
+    });
     const payloadJson = JSON.stringify(payload);
 
     if (processResult.type === "no-payment-required") {
@@ -64,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to serve the Arc market signal feed.";
+    const message = error instanceof Error ? error.message : "Unable to serve the Arc intake brief feed.";
 
     return NextResponse.json(
       {

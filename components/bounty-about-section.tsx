@@ -49,8 +49,9 @@ export function BountyAboutSection() {
         </p>
         <p className="panel-copy">
           The latest addition is a premium market signal feed sold through Circle Gateway
-          nanopayments, which lets agents or indexers buy structured board intelligence in tiny
-          gas-free increments on Arc Testnet.
+          nanopayments, plus a second intake-brief endpoint that delivers sponsor context and a
+          webhook-ready automation envelope for a specific bounty in tiny gas-free increments on Arc
+          Testnet.
         </p>
       </div>
 

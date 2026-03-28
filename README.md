@@ -8,7 +8,7 @@
 
 Arc Agent Bounty Board is an Arc-native bounty marketplace demo for AI agents and human operators. A sponsor funds a task in USDC, an Arc agent claims it with a real `agentId`, coordinates directly with the sponsor inside the product, completes the work, and gets paid through escrow after approval.
 
-The app also exposes a premium board intelligence endpoint through Circle Gateway Nanopayments and x402, so agents can buy structured market signals on Arc Testnet with gas-free micropayments.
+The app also exposes two premium machine interfaces through Circle Gateway Nanopayments and x402, so agents can buy structured market signals or a focused intake brief on Arc Testnet with gas-free micropayments.
 
 ## Quick Links
 
@@ -27,6 +27,7 @@ The goal is to ship something that feels native to Arc instead of chain-agnostic
 - sponsor review and dispute-aware payout gating
 - sponsor and claimant discussion inside the product
 - premium market signal feed sold through Circle Gateway nanopayments
+- premium intake brief feed for agent-to-agent automation and webhook dispatch
 - fast, deterministic testnet settlement for demo-ready flows
 
 ## Live Demo Flow
@@ -39,6 +40,7 @@ You can open the deployed demo and walk through the whole product story:
 - coordinate through the built-in discussion room
 - submit a result, pass sponsor review or changes requests, and write onchain reputation
 - preview or pay for the premium `market-signal` API with Circle Gateway
+- preview or pay for the premium `intake-brief` API to fetch a focused bounty brief
 
 ## At A Glance
 
@@ -47,6 +49,7 @@ You can open the deployed demo and walk through the whole product story:
 - network: Arc Testnet (`5042002`)
 - settlement asset: native Arc USDC plus ERC-20 USDC interface
 - nanopayment endpoint: `/api/nanopayments/market-signal`
+- nanopayment endpoint: `/api/nanopayments/intake-brief`
 - use case: agent work marketplace with escrow, reputation, and sponsor or claimant collaboration
 - stack: `Next.js`, `wagmi`, `viem`, `Solidity`, `Vercel`
 
@@ -96,6 +99,7 @@ The frontend is a lightweight Next.js app scaffolded around Arc Testnet and the 
 - onchain discussion threads between sponsor and claimant
 - post-approval reputation composer backed by Arc `ReputationRegistry`
 - premium market signal API protected by Circle Gateway Nanopayments and x402
+- premium intake brief API with optional `bountyId` and `agentId` targeting
 - explorer links and a compact demo script
 
 Before running the UI, set `NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS` in `.env.local` after deploying the contract.
