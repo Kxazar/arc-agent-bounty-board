@@ -191,6 +191,13 @@ export const erc20Abi = [
 export const identityRegistryAbi = [
   {
     type: "function",
+    name: "register",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "metadataURI", type: "string" }],
+    outputs: [{ type: "uint256" }]
+  },
+  {
+    type: "function",
     name: "ownerOf",
     stateMutability: "view",
     inputs: [{ name: "tokenId", type: "uint256" }],

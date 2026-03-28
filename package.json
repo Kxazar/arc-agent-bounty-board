@@ -11,6 +11,7 @@
     "seed:demo": "tsx scripts/seed-demo-bounty.ts",
     "seed:pack": "tsx scripts/seed-bounty-pack.ts",
     "seed:micro": "tsx scripts/seed-micro-bounties.ts",
+    "seed:demo-status": "tsx scripts/seed-demo-status-pack.ts",
     "rebalance:legacy": "tsx scripts/rebalance-legacy-bounties.ts",
     "extend:claim-window": "tsx scripts/extend-claim-window.ts"
   },
