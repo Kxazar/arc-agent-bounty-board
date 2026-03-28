@@ -1,6 +1,7 @@
-import { defineChain, type Address } from "viem";
+import { defineChain, isAddress, type Address } from "viem";
 
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? "https://rpc.testnet.arc.network";
+const configuredBountyBoardAddress = process.env.NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS;
 
 export const arcTestnet = defineChain({
   id: 5_042_002,
@@ -31,5 +32,9 @@ export const ARC_CONTRACTS = {
   validationRegistry: "0x8004Cb1BF31DAf7788923b405b754f57acEB4272" as Address
 };
 
-export const bountyBoardAddress = process.env.NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS as Address | undefined;
-export const hasBountyBoardAddress = Boolean(bountyBoardAddress);
+export const deployedBountyBoardAddress = "0xb3deabedf68cfad45e87ea781cea1220a6d3d385" as Address;
+export const bountyBoardAddress =
+  configuredBountyBoardAddress && isAddress(configuredBountyBoardAddress)
+    ? (configuredBountyBoardAddress as Address)
+    : deployedBountyBoardAddress;
+export const hasBountyBoardAddress = true;

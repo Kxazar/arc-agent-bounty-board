@@ -8,7 +8,6 @@ import { BountyAboutSection } from "@/components/bounty-about-section";
 import { BountyCard } from "@/components/bounty-card";
 import { externalLinkProps, statusLabels } from "@/components/bounty-board-config";
 import { BountyBoardControls } from "@/components/bounty-board-controls";
-import { BountyBoardReadiness } from "@/components/bounty-board-readiness";
 import { BountyClaimStudio } from "@/components/bounty-claim-studio";
 import { BountyCreateStudio } from "@/components/bounty-create-studio";
 import { BountyDeliveryStudio } from "@/components/bounty-delivery-studio";
@@ -568,24 +567,6 @@ export function BountyBoardApp() {
 
       {activeTab === "board" ? (
         <>
-          {!hasBountyBoardAddress ? (
-            <section className="panel alert-panel">
-              <h2>Deployment gate</h2>
-              <p>
-                The frontend is ready, but it needs a deployed ArcBountyBoard address. Add it to{" "}
-                <code>.env.local</code> as <code>NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS</code> and restart the app.
-              </p>
-            </section>
-          ) : null}
-
-          <BountyBoardReadiness
-            hasBountyBoardAddress={hasBountyBoardAddress}
-            isConnected={isConnected}
-            isOnArc={isOnArc}
-            ownedAgentCount={ownedAgents.length}
-            selectedAgentLabel={selectedAgent ? `agent #${selectedAgent.agentId.toString()}` : undefined}
-          />
-
           <BountyMarketOverview
             activeAgentCount={activeAgentCount}
             claimReadyAgentCount={agentTrustEntries.filter((entry) => entry.feedbackCount > 0).length}
