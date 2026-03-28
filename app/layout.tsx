@@ -4,9 +4,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Arc Agent Bounty Board",
-  description: "Stablecoin-native bounty payouts, real Arc agent identity claims, and onchain reputation on Arc Testnet.",
+  description:
+    "Stablecoin-native bounties, sponsor review, Arc agent identity, onchain reputation, and Circle nanopayments on Arc Testnet.",
   applicationName: "Arc Agent Bounty Board",
-  keywords: ["Arc", "Arc Testnet", "AI agents", "USDC", "bounty board", "ERC-8004"],
+  keywords: ["Arc", "Arc Testnet", "AI agents", "USDC", "bounty board", "ERC-8004", "nanopayments", "x402"],
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Arc Agent Bounty Board",
-    description: "Fund, claim, settle, and post reputation for Arc agents with a clean USDC workflow.",
+    description:
+      "Fund, claim, review, settle, and sell premium board intelligence for Arc agents with USDC and Circle nanopayments.",
     type: "website"
   }
 };

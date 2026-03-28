@@ -17,6 +17,7 @@ import { BountyMarketOverview } from "@/components/bounty-market-overview";
 import { BountyRoadmapSection } from "@/components/bounty-roadmap-section";
 import { FeaturedBountiesStrip } from "@/components/featured-bounties-strip";
 import { MyBountiesWorkspace } from "@/components/my-bounties-workspace";
+import { NanopaymentsPanel } from "@/components/nanopayments-panel";
 import type {
   AgentTrustSummary,
   BoardScopeFilter,
@@ -380,6 +381,7 @@ export function BountyBoardApp() {
       return Number(right.id - left.id);
     });
   const openCount = bounties.filter((bounty) => bounty.status === 0).length;
+  const reviewQueueCount = bounties.filter((bounty) => bounty.status === 2 || bounty.status === 3 || bounty.status === 5).length;
   const actionNeededCount = bounties.filter((bounty) => isActionNeededForAddress(bounty, normalizedAddress)).length;
   const sponsorTrustByCreator = buildSponsorTrustMap(bounties);
   const topSponsors = Object.values(sponsorTrustByCreator)
@@ -585,6 +587,13 @@ export function BountyBoardApp() {
             topAgents={agentTrustEntries.slice(0, 3)}
           />
 
+          <NanopaymentsPanel
+            bountyBoardAddress={hasBountyBoardAddress ? bountyBoardAddress : undefined}
+            disputedCount={bounties.filter((bounty) => bounty.status === 5).length}
+            openCount={openCount}
+            reviewQueueCount={reviewQueueCount}
+          />
+
           <FeaturedBountiesStrip
             connectedAddress={address}
             featuredBounties={featuredBounties}
@@ -767,22 +776,26 @@ export function BountyBoardApp() {
             <div className="panel">
               <h2>Demo script</h2>
               <ol className="ordered-list">
-                <li>Claim test USDC from the Arc faucet and connect on Arc Testnet.</li>
-                <li>Pick one of the seeded bounty cards or create your own task.</li>
-                <li>Claim it with a registered Arc agent ID.</li>
-                <li>Use the built-in discussion room to align with the sponsor inside the app.</li>
-                <li>Submit a result link, pass sponsor review or iterate on revisions, then record reputation.</li>
-              </ol>
-            </div>
+              <li>Claim test USDC from the Arc faucet and connect on Arc Testnet.</li>
+              <li>Pick one of the seeded bounty cards or create your own task.</li>
+              <li>Claim it with a registered Arc agent ID.</li>
+              <li>Use the built-in discussion room to align with the sponsor inside the app.</li>
+              <li>Submit a result link, pass sponsor review or iterate on revisions, then record reputation.</li>
+              <li>Call the nanopayment feed if you want premium board intelligence through Circle Gateway.</li>
+            </ol>
+          </div>
 
-            <div className="panel">
-              <h2>Useful links</h2>
+          <div className="panel">
+            <h2>Useful links</h2>
               <div className="link-list">
                 <a {...externalLinkProps} href="https://docs.arc.network/arc/tutorials/register-your-first-ai-agent">
                   Register your first AI agent
                 </a>
                 <a {...externalLinkProps} href="https://docs.arc.network/arc/tutorials/deploy-on-arc">
                   Deploy on Arc
+                </a>
+                <a {...externalLinkProps} href="https://developers.circle.com/gateway/nanopayments">
+                  Circle Nanopayments
                 </a>
                 <a {...externalLinkProps} href="https://faucet.circle.com">
                   Circle faucet

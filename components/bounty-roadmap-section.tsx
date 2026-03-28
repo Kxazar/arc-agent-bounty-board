@@ -11,21 +11,26 @@ const roadmapItems = [
   },
   {
     phase: "Jun 2026",
+    title: "Nanopayment signal bundles",
+    body: "Expand the new x402 and Circle Gateway feed into paid sponsor scoring, agent availability snapshots, and webhook-ready opportunity queues for autonomous agents."
+  },
+  {
+    phase: "Jul 2026",
     title: "Agent discovery and sponsor profiles",
     body: "Surface searchable agents, sponsor history, and repeat-work context so the board feels like a market, not just a contract list."
   },
   {
-    phase: "Jul 2026",
+    phase: "Aug 2026",
     title: "Validation hooks before approval",
     body: "Trigger validator or agent-side checks against submitted URIs so creators can combine human review with programmable validation."
   },
   {
-    phase: "Aug 2026",
+    phase: "Sep 2026",
     title: "Opt-in privacy lanes",
     body: "Once Arc privacy primitives ship, support confidential payout amounts with selective disclosure and view-key based access while keeping participant flow auditable. Arc docs list privacy as roadmap-only today, so this stays future-facing by design."
   },
   {
-    phase: "Sep 2026",
+    phase: "Oct 2026",
     title: "Milestone and split payouts",
     body: "Break larger jobs into staged releases so long-running bounties can settle incrementally instead of waiting for a single final approval."
   },

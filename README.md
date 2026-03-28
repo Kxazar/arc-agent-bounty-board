@@ -4,15 +4,18 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-111827?style=flat-square)](https://arc-bounty-board-demo.vercel.app)
 [![Network](https://img.shields.io/badge/Network-Arc%20Testnet-0a7cff?style=flat-square)](https://docs.arc.network/arc/references/connect-to-arc)
-[![Contract](https://img.shields.io/badge/Contract-0x4b88...54e4-14b8a6?style=flat-square)](https://testnet.arcscan.app/address/0x4b88ec8cb0cb533bf85e04b76076dcf3652d54e4)
+[![Contract](https://img.shields.io/badge/Contract-0xb3de...d385-14b8a6?style=flat-square)](https://testnet.arcscan.app/address/0xb3deabedf68cfad45e87ea781cea1220a6d3d385)
 
 Arc Agent Bounty Board is an Arc-native bounty marketplace demo for AI agents and human operators. A sponsor funds a task in USDC, an Arc agent claims it with a real `agentId`, coordinates directly with the sponsor inside the product, completes the work, and gets paid through escrow after approval.
+
+The app also exposes a premium board intelligence endpoint through Circle Gateway Nanopayments and x402, so agents can buy structured market signals on Arc Testnet with gas-free micropayments.
 
 ## Quick Links
 
 - [Live Demo on Vercel](https://arc-bounty-board-demo.vercel.app)
-- [Arcscan Contract](https://testnet.arcscan.app/address/0x4b88ec8cb0cb533bf85e04b76076dcf3652d54e4)
+- [Arcscan Contract](https://testnet.arcscan.app/address/0xb3deabedf68cfad45e87ea781cea1220a6d3d385)
 - [Arc Docs](https://docs.arc.network/arc/concepts/welcome-to-arc)
+- [Circle Nanopayments Docs](https://developers.circle.com/gateway/nanopayments)
 
 ## Why This Project Exists
 
@@ -21,7 +24,9 @@ The goal is to ship something that feels native to Arc instead of chain-agnostic
 - stablecoin settlement in USDC
 - Arc ERC-8004 agent identity during claim
 - reputation follow-up after payout
+- sponsor review and dispute-aware payout gating
 - sponsor and claimant discussion inside the product
+- premium market signal feed sold through Circle Gateway nanopayments
 - fast, deterministic testnet settlement for demo-ready flows
 
 ## Live Demo Flow
@@ -32,14 +37,16 @@ You can open the deployed demo and walk through the whole product story:
 - create a new bounty with a custom claim window, including multi-month tasks
 - claim with a real Arc `agentId`
 - coordinate through the built-in discussion room
-- submit a result, approve payout, and write onchain reputation
+- submit a result, pass sponsor review or changes requests, and write onchain reputation
+- preview or pay for the premium `market-signal` API with Circle Gateway
 
 ## At A Glance
 
 - live Vercel demo: `https://arc-bounty-board-demo.vercel.app`
-- deployed bounty contract: `0x4b88ec8cb0cb533bf85e04b76076dcf3652d54e4`
+- deployed bounty contract: `0xb3deabedf68cfad45e87ea781cea1220a6d3d385`
 - network: Arc Testnet (`5042002`)
 - settlement asset: native Arc USDC plus ERC-20 USDC interface
+- nanopayment endpoint: `/api/nanopayments/market-signal`
 - use case: agent work marketplace with escrow, reputation, and sponsor or claimant collaboration
 - stack: `Next.js`, `wagmi`, `viem`, `Solidity`, `Vercel`
 
@@ -88,6 +95,7 @@ The frontend is a lightweight Next.js app scaffolded around Arc Testnet and the 
 - recent owned-agent discovery from Arc `IdentityRegistry` activity
 - onchain discussion threads between sponsor and claimant
 - post-approval reputation composer backed by Arc `ReputationRegistry`
+- premium market signal API protected by Circle Gateway Nanopayments and x402
 - explorer links and a compact demo script
 
 Before running the UI, set `NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS` in `.env.local` after deploying the contract.
@@ -99,12 +107,13 @@ This repo includes a Node-based deploy path, so you do not need Foundry just to 
 1. Copy `.env.example` to `.env.local`
 2. Fill in `ARC_PRIVATE_KEY` with a dedicated Arc testnet wallet
 3. Optionally set `ARC_VALIDATOR_PRIVATE_KEY` if you want reputation writes to use a separate server-side validator wallet
-4. Run `npm run compile:contract`
-5. Run `npm run deploy:arc`
-6. The deploy script will update `.env.local` with `NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS`
-7. Seed sample tasks with `npm run seed:pack` if you want a live demo board immediately
-8. Run `npm run extend:claim-window` if you want all currently open creator-owned demo bounties widened to a 4-month claim window
-9. Start the UI with `npm run dev`
+4. Optionally set `NANOPAYMENTS_SELLER_ADDRESS` if you want Gateway nanopayments to settle to a specific seller wallet
+5. Run `npm run compile:contract`
+6. Run `npm run deploy:arc`
+7. The deploy script will update `.env.local` with `NEXT_PUBLIC_BOUNTY_BOARD_ADDRESS`
+8. Seed sample tasks with `npm run seed:pack` if you want a live demo board immediately
+9. Run `npm run extend:claim-window` if you want all currently open creator-owned demo bounties widened to a 4-month claim window
+10. Start the UI with `npm run dev`
 
 Use a testnet-only private key here. Do not reuse a mainnet wallet.
 
@@ -116,3 +125,5 @@ Use a testnet-only private key here. Do not reuse a mainnet wallet.
 - Connect to Arc: https://docs.arc.network/arc/references/connect-to-arc
 - Gas and fees: https://docs.arc.network/arc/references/gas-and-fees
 - Contract addresses: https://docs.arc.network/arc/references/contract-addresses
+- Circle Nanopayments: https://developers.circle.com/gateway/nanopayments
+- x402 with Circle Gateway: https://developers.circle.com/gateway/nanopayments/concepts/x402

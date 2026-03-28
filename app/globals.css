@@ -566,7 +566,8 @@ h3 {
 .trust-grid,
 .featured-grid,
 .featured-meta,
-.signal-row {
+.signal-row,
+.nanopay-grid {
   display: grid;
   gap: 1rem;
 }
@@ -1006,6 +1007,55 @@ h3 {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.nanopay-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-top: 1rem;
+}
+
+.nanopay-card,
+.nanopay-subpanel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.nanopay-metrics {
+  margin-top: 0.4rem;
+}
+
+.nanopay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.nanopay-preview {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(9, 30, 42, 0.82), rgba(7, 20, 29, 0.88));
+  border: 1px solid rgba(103, 172, 255, 0.16);
+}
+
+.nanopay-preview p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.code-block {
+  margin: 0;
+  overflow: auto;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(6, 20, 20, 0.92);
+  border: 1px solid rgba(159, 242, 216, 0.12);
+  color: #dffbf4;
+  line-height: 1.65;
+  font-size: 0.86rem;
+  font-family: "Cascadia Mono", "Cascadia Code", "Consolas", monospace;
+}
+
 .signal-chip {
   display: grid;
   gap: 0.5rem;
@@ -1332,6 +1382,10 @@ h3 {
   }
 
   .featured-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .nanopay-grid {
     grid-template-columns: 1fr;
   }
 }

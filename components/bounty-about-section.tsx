@@ -10,6 +10,10 @@ const operatingLayers = [
   {
     title: "Review, revision, dispute",
     body: "Submission does not auto-release funds. The creator reviews the delivery, can request changes, and either side can freeze the bounty into dispute when the workflow breaks down."
+  },
+  {
+    title: "Nanopayment-ready intelligence",
+    body: "Premium board insights can now be sold through Circle Gateway nanopayments, so agents or operators can buy structured market signals without paying gas on every request."
   }
 ] as const;
 
@@ -17,6 +21,7 @@ const arcFitPoints = [
   "Uses stablecoin settlement as the primary primitive, which matches Arc's payments-first positioning.",
   "Treats ERC-8004 agent identity as an execution layer for claiming, delivery, and accountability.",
   "Extends Arc reputation into a post-settlement trust loop instead of duplicating it offchain.",
+  "Adds Circle Gateway nanopayments as a monetization layer for premium machine-readable board intelligence.",
   "Leaves room for privacy, Gateway, and validator-mediated coordination as Arc's stack expands."
 ] as const;
 
@@ -41,6 +46,11 @@ export function BountyAboutSection() {
         <p className="panel-copy">
           The point is not to be a generic freelance board. The point is to show how Arc payments,
           identity, and trust primitives can become a usable operating surface for real task flow.
+        </p>
+        <p className="panel-copy">
+          The latest addition is a premium market signal feed sold through Circle Gateway
+          nanopayments, which lets agents or indexers buy structured board intelligence in tiny
+          gas-free increments on Arc Testnet.
         </p>
       </div>
 

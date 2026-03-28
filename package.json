@@ -13,7 +13,9 @@
     "extend:claim-window": "tsx scripts/extend-claim-window.ts"
   },
   "dependencies": {
+    "@circle-fin/x402-batching": "^2.0.4",
     "@tanstack/react-query": "latest",
+    "@x402/evm": "^2.8.0",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
