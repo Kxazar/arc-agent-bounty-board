@@ -10,6 +10,8 @@
     "deploy:arc": "tsx scripts/deploy.ts",
     "seed:demo": "tsx scripts/seed-demo-bounty.ts",
     "seed:pack": "tsx scripts/seed-bounty-pack.ts",
+    "seed:micro": "tsx scripts/seed-micro-bounties.ts",
+    "rebalance:legacy": "tsx scripts/rebalance-legacy-bounties.ts",
     "extend:claim-window": "tsx scripts/extend-claim-window.ts"
   },
   "dependencies": {
