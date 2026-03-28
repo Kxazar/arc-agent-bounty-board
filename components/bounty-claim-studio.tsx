@@ -24,6 +24,7 @@ interface BountyClaimStudioProps {
   setClaimForm: Dispatch<SetStateAction<ClaimFormValue>>;
   onSelectAgent: (agentId: bigint) => void;
   onClaim: () => void;
+  variant?: "panel" | "flat";
 }
 
 export function BountyClaimStudio({
@@ -39,10 +40,11 @@ export function BountyClaimStudio({
   agentLookupError,
   setClaimForm,
   onSelectAgent,
-  onClaim
+  onClaim,
+  variant = "panel"
 }: BountyClaimStudioProps) {
   return (
-    <div className="panel" id="claim-studio">
+    <div className={variant === "flat" ? "studio-flat" : "panel"} id="claim-studio">
       <h2>Claim bounty</h2>
       <p className="panel-copy">
         Claim uses the real Arc ERC-8004 <code>agentId</code> and verifies wallet ownership

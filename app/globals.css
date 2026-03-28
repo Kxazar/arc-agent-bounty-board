@@ -294,6 +294,7 @@ h3 {
 
 .stat-row,
 .section-header,
+.section-actions,
 .card-footer,
 .post-action-head,
 .reputation-strip {
@@ -411,6 +412,11 @@ h3 {
   margin-top: 1rem;
 }
 
+.compact-grid {
+  display: grid;
+  gap: 1rem;
+}
+
 .readiness-grid,
 .board-controls-grid,
 .board-metrics {
@@ -511,6 +517,59 @@ h3 {
   border-radius: 1.2rem;
   border: 1px solid rgba(159, 242, 216, 0.1);
   background: rgba(255, 255, 255, 0.03);
+}
+
+.action-console-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.action-console-toolbar {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.action-console-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.action-console-card,
+.studio-flat {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(159, 242, 216, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.action-console-card {
+  padding: 1rem;
+}
+
+.action-console-card p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.action-console-surface {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(9, 30, 28, 0.78), rgba(7, 21, 20, 0.88));
+  border: 1px solid rgba(159, 242, 216, 0.12);
+}
+
+.studio-flat {
+  padding: 1.1rem;
+}
+
+.board-collapse-note {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .board-metrics {

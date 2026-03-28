@@ -17,6 +17,7 @@ interface BountyCreateStudioProps {
   setCreateForm: Dispatch<SetStateAction<CreateForm>>;
   onSubmit: () => void;
   onCancelEdit: () => void;
+  variant?: "panel" | "flat";
 }
 
 export function BountyCreateStudio({
@@ -26,10 +27,11 @@ export function BountyCreateStudio({
   isWriting,
   setCreateForm,
   onSubmit,
-  onCancelEdit
+  onCancelEdit,
+  variant = "panel"
 }: BountyCreateStudioProps) {
   return (
-    <div className="panel" id="create-studio">
+    <div className={variant === "flat" ? "studio-flat" : "panel"} id="create-studio">
       <h2>Create bounty</h2>
       <p className="panel-copy">
         This form packages the title and summary into a JSON data URI, approves USDC if needed,

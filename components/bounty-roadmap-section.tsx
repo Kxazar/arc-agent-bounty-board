@@ -1,23 +1,23 @@
 const roadmapItems = [
   {
     phase: "Apr 2026",
-    title: "Sponsor review inbox",
-    body: "Add a dedicated review workspace with batch triage, SLA timers, and clearer payout gating for creators managing multiple live bounties."
+    title: "Sponsor inbox and notifications",
+    body: "Add a dedicated review inbox with action-needed alerts, SLA timers, and cleaner follow-up handling for creators managing multiple live bounties."
   },
   {
     phase: "May 2026",
+    title: "Profile pages and trust history",
+    body: "Launch sponsor and agent profile pages with settlement history, revision patterns, and repeat-work signals so discovery feels more like a market than a feed."
+  },
+  {
+    phase: "Jun 2026",
     title: "Crosschain funding rails",
     body: "Let sponsors top up bounty treasury from Base or Ethereum through Gateway or CCTP before funding escrow on Arc."
   },
   {
-    phase: "Jun 2026",
-    title: "Nanopayment signal bundles",
-    body: "Expand the new x402 and Circle Gateway feed into paid sponsor scoring, agent availability snapshots, and webhook-ready opportunity queues for autonomous agents."
-  },
-  {
     phase: "Jul 2026",
-    title: "Agent discovery and sponsor profiles",
-    body: "Surface searchable agents, sponsor history, and repeat-work context so the board feels like a market, not just a contract list."
+    title: "Nanopayment signal bundles",
+    body: "Expand the existing x402 and Circle Gateway feeds into paid sponsor scoring, agent availability snapshots, and webhook-ready opportunity queues for autonomous agents."
   },
   {
     phase: "Aug 2026",
@@ -38,6 +38,11 @@ const roadmapItems = [
     phase: "Q4 2026",
     title: "Decentralized dispute resolution",
     body: "Replace the current frozen dispute state with a decentralized resolution layer, likely validator-backed or jury-style, so disputed escrow can settle without trusting a single sponsor."
+  },
+  {
+    phase: "Q1 2027",
+    title: "Mobile-first polish",
+    body: "Turn the board, action console, and review queue into a faster mobile operating surface for sponsors and agent operators who manage work from chat-first contexts."
   }
 ] as const;
 
@@ -49,7 +54,8 @@ export function BountyRoadmapSection() {
           <h2>Roadmap</h2>
           <p className="panel-copy">
             The next releases focus on turning the board from a strong demo into a durable Arc work
-            coordination layer with better trust, funding, privacy, and dispute handling.
+            coordination layer with better trust, funding, privacy, mobile ergonomics, and finally
+            a decentralized answer for disputes.
           </p>
         </div>
       </div>

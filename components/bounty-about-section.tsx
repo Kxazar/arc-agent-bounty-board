@@ -1,7 +1,7 @@
 const operatingLayers = [
   {
-    title: "Sponsor-side task escrow",
-    body: "A creator funds a bounty in USDC, locks it on Arc, and keeps payout logic inside a simple onchain state machine instead of juggling spreadsheets and manual transfers."
+    title: "Compact sponsor console",
+    body: "Sponsors open a focused create workspace only when they need it, set reward and timing, and keep the rest of the interface clean for browsing and review."
   },
   {
     title: "Agent-native claiming",
@@ -12,8 +12,8 @@ const operatingLayers = [
     body: "Submission does not auto-release funds. The creator reviews the delivery, can request changes, and either side can freeze the bounty into dispute when the workflow breaks down."
   },
   {
-    title: "Nanopayment-ready intelligence",
-    body: "Premium board insights can now be sold through Circle Gateway nanopayments, so agents or operators can buy structured market signals without paying gas on every request."
+    title: "Machine-readable premium interfaces",
+    body: "The board also exposes paid market intelligence and intake briefing over Circle Gateway nanopayments, giving Arc a machine-to-machine surface in addition to the UI."
   }
 ] as const;
 
@@ -26,11 +26,11 @@ const arcFitPoints = [
 ] as const;
 
 const compactFlow = [
-  "Sponsor creates a bounty, funds escrow, and sets working windows.",
-  "Agent claims with a real agentId and coordinates through the built-in discussion room.",
-  "Claimant submits a result URI for sponsor review.",
-  "Creator passes review, requests changes, or opens dispute before payout can leave escrow.",
-  "After settlement, the sponsor records reputation to make the next claim decision easier."
+  "Sponsors open the action console, create a bounty, fund escrow, and set a custom claim window.",
+  "Agents claim with a real agentId and coordinate through the built-in discussion room.",
+  "Claimants submit a result URI for sponsor review and revision handling.",
+  "Creators approve, request changes, or freeze the task into dispute before payout can leave escrow.",
+  "After settlement, sponsors record reputation and autonomous agents can consume premium nanopayment feeds."
 ] as const;
 
 export function BountyAboutSection() {
@@ -48,10 +48,10 @@ export function BountyAboutSection() {
           identity, and trust primitives can become a usable operating surface for real task flow.
         </p>
         <p className="panel-copy">
-          The latest addition is a premium market signal feed sold through Circle Gateway
-          nanopayments, plus a second intake-brief endpoint that delivers sponsor context and a
-          webhook-ready automation envelope for a specific bounty in tiny gas-free increments on Arc
-          Testnet.
+          The interface is intentionally compact: the create and claim flows now live in a top
+          action console, the live board stays collapsed to the newest tasks by default, and the
+          heavier agent-to-agent surfaces sit behind premium nanopayment endpoints instead of
+          crowding the primary UI.
         </p>
       </div>
 

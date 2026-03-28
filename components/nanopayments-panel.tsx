@@ -6,7 +6,6 @@ import type { Address } from "viem";
 import { externalLinkProps } from "@/components/bounty-board-config";
 import { explorerAddressLink, shortenAddress } from "@/lib/format";
 import {
-  nanopaymentDocs,
   nanopaymentIntakeBriefEndpoint,
   nanopaymentIntakeBriefPrice,
   nanopaymentIntakeBriefProductName,
@@ -65,9 +64,6 @@ export function NanopaymentsPanel({
 }: NanopaymentsPanelProps) {
   const [marketPreviewState, setMarketPreviewState] = useState<PreviewState>({ status: "idle" });
   const [briefPreviewState, setBriefPreviewState] = useState<PreviewState>({ status: "idle" });
-  const [origin] = useState(() =>
-    typeof window === "undefined" ? "https://arc-bounty-board-demo.vercel.app" : window.location.origin
-  );
   const [selectedBriefBountyId, setSelectedBriefBountyId] = useState(() => briefTargets[0]?.id ?? "");
   const [selectedBriefAgentId, setSelectedBriefAgentId] = useState("");
 
@@ -109,7 +105,6 @@ export function NanopaymentsPanel({
     }
   }
 
-  const marketUrl = `${origin}${nanopaymentMarketSignalEndpoint}`;
   const intakeParams = new URLSearchParams();
 
   if (selectedTarget?.id) {
@@ -121,32 +116,6 @@ export function NanopaymentsPanel({
   }
 
   const intakePath = intakeParams.size > 0 ? `${nanopaymentIntakeBriefEndpoint}?${intakeParams.toString()}` : nanopaymentIntakeBriefEndpoint;
-  const intakeUrl = `${origin}${intakePath}`;
-  const marketSnippet = [
-    'import { GatewayClient } from "@circle-fin/x402-batching/client";',
-    "",
-    "const gateway = new GatewayClient({",
-    '  chain: "arcTestnet",',
-    '  privateKey: process.env.ARC_BUYER_KEY as `0x${string}`',
-    "});",
-    "",
-    'await gateway.deposit("0.05");',
-    `const { data } = await gateway.pay("${marketUrl}");`,
-    "console.log(data);"
-  ].join("\n");
-  const intakeSnippet = [
-    'import { GatewayClient } from "@circle-fin/x402-batching/client";',
-    "",
-    "const gateway = new GatewayClient({",
-    '  chain: "arcTestnet",',
-    '  privateKey: process.env.ARC_BUYER_KEY as `0x${string}`',
-    "});",
-    "",
-    'await gateway.deposit("0.05");',
-    `const { data } = await gateway.pay("${intakeUrl}");`,
-    "console.log(data.webhookEnvelope);"
-  ].join("\n");
-
   return (
     <section className="panel board-panel">
       <div className="section-header">
@@ -163,7 +132,7 @@ export function NanopaymentsPanel({
 
       <div className="nanopay-grid">
         <article className="nanopay-card">
-          <span className="card-label">Product one</span>
+          <span className="card-label">Signal product</span>
           <h3>{nanopaymentProductName}</h3>
           <p>
             A board-wide intelligence feed that ranks opportunities, sponsor quality, review
@@ -198,7 +167,7 @@ export function NanopaymentsPanel({
         </article>
 
         <article className="nanopay-card">
-          <span className="card-label">Product two</span>
+          <span className="card-label">Brief product</span>
           <h3>{nanopaymentIntakeBriefProductName}</h3>
           <p>
             A focused bounty brief for agent-to-agent automation. It packages one target bounty
@@ -355,48 +324,6 @@ export function NanopaymentsPanel({
             {briefPreviewState.status === "done" ? <p>Content-Type: {briefPreviewState.contentType}</p> : null}
 
             <pre className="code-block">{stringifyPreviewBody(briefPreviewState)}</pre>
-          </div>
-        </article>
-      </div>
-
-      <div className="grid-two compact-grid">
-        <article className="panel nanopay-subpanel">
-          <div className="section-header">
-            <div>
-              <h3>Buyer flows</h3>
-              <p className="panel-copy">
-                Fund Gateway once, then pay either endpoint gas-free from Arc Testnet.
-              </p>
-            </div>
-          </div>
-
-          <div className="nanopay-code-stack">
-            <div>
-              <strong>Market signal</strong>
-              <pre className="code-block">{marketSnippet}</pre>
-            </div>
-            <div>
-              <strong>Agent intake brief</strong>
-              <pre className="code-block">{intakeSnippet}</pre>
-            </div>
-          </div>
-        </article>
-
-        <article className="panel nanopay-subpanel">
-          <div className="section-header">
-            <div>
-              <h3>Official references</h3>
-              <p className="panel-copy">
-                These are the primary docs that define how the integration works today.
-              </p>
-            </div>
-          </div>
-          <div className="link-list">
-            {nanopaymentDocs.map((entry) => (
-              <a {...externalLinkProps} href={entry.url} key={entry.url}>
-                {entry.label}
-              </a>
-            ))}
           </div>
         </article>
       </div>

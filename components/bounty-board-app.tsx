@@ -5,11 +5,10 @@ import { useState } from "react";
 import { formatUnits } from "viem";
 
 import { BountyAboutSection } from "@/components/bounty-about-section";
+import { BountyActionConsole, type ActionStudioKey } from "@/components/bounty-action-console";
 import { BountyCard } from "@/components/bounty-card";
 import { externalLinkProps, statusLabels } from "@/components/bounty-board-config";
 import { BountyBoardControls } from "@/components/bounty-board-controls";
-import { BountyClaimStudio } from "@/components/bounty-claim-studio";
-import { BountyCreateStudio } from "@/components/bounty-create-studio";
 import { BountyDeliveryStudio } from "@/components/bounty-delivery-studio";
 import { BountyDiscussionModal } from "@/components/bounty-discussion-modal";
 import { BountyMarketOverview } from "@/components/bounty-market-overview";
@@ -31,6 +30,7 @@ import { useBountyBoard } from "@/hooks/use-bounty-board";
 import type { ReputationSummary } from "@/lib/agent-tools";
 import { ARC_CONTRACTS, arcTestnet } from "@/lib/arc";
 import { explorerAddressLink, explorerTxLink, formatUsdc, shortenAddress } from "@/lib/format";
+import { nanopaymentDocs } from "@/lib/nanopayments-shared";
 
 function fallbackDiscussionDraft() {
   return {
@@ -241,6 +241,8 @@ function matchesScopeFilter(bounty: BountyView, scopeFilter: BoardScopeFilter, l
 
 export function BountyBoardApp() {
   const { wallet, board, forms, ui, meta, actions } = useBountyBoard();
+  const [activeStudio, setActiveStudio] = useState<ActionStudioKey>(null);
+  const [isBoardExpanded, setIsBoardExpanded] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState<BoardStatusFilter>("all");
   const [scopeFilter, setScopeFilter] = useState<BoardScopeFilter>("all");
@@ -414,12 +416,49 @@ export function BountyBoardApp() {
     .reduce((sum, bounty) => sum + bounty.payoutAmount, 0n);
   const hasActiveBoardFilters =
     normalizedSearch !== "" || statusFilter !== "all" || scopeFilter !== "all" || sortBy !== "newest";
+  const shouldShowBoardToggle = filteredBounties.length > 3 && !hasActiveBoardFilters;
+  const visibleBounties = shouldShowBoardToggle && !isBoardExpanded ? filteredBounties.slice(0, 3) : filteredBounties;
+  const hiddenBountyCount = Math.max(0, filteredBounties.length - visibleBounties.length);
+  const usefulLinks = [
+    {
+      label: "Register your first AI agent",
+      url: "https://docs.arc.network/arc/tutorials/register-your-first-ai-agent"
+    },
+    {
+      label: "Deploy on Arc",
+      url: "https://docs.arc.network/arc/tutorials/deploy-on-arc"
+    },
+    {
+      label: "Circle faucet",
+      url: "https://faucet.circle.com"
+    },
+    ...nanopaymentDocs
+  ];
 
   function resetBoardView() {
     setSearchValue("");
     setStatusFilter("all");
     setScopeFilter("all");
     setSortBy("newest");
+  }
+
+  function toggleStudio(nextStudio: Exclude<ActionStudioKey, null>) {
+    setActiveStudio((currentStudio) => (currentStudio === nextStudio ? null : nextStudio));
+  }
+
+  function openCreateStudioForBounty(bounty: BountyView) {
+    setActiveStudio("create");
+    primeEditFlow(bounty);
+  }
+
+  function openClaimStudioForBounty(bountyId: bigint) {
+    setActiveStudio("claim");
+    primeClaimFlow(bountyId);
+  }
+
+  function handleCancelCreateEdit() {
+    resetCreateStudio();
+    setActiveStudio(null);
   }
 
   return (
@@ -576,12 +615,32 @@ export function BountyBoardApp() {
             topAgents={agentTrustEntries.slice(0, 3)}
           />
 
-          <NanopaymentsPanel
-            bountyBoardAddress={hasBountyBoardAddress ? bountyBoardAddress : undefined}
-            briefTargets={briefTargets}
-            disputedCount={bounties.filter((bounty) => bounty.status === 5).length}
-            openCount={openCount}
-            reviewQueueCount={reviewQueueCount}
+          <BountyActionConsole
+            activeStudio={activeStudio}
+            agentLookupError={agentLookupError}
+            claimForm={claimForm}
+            createForm={createForm}
+            editingBounty={editingBounty}
+            hasPreparedResult={Boolean(preparedResultBounty || resultForm.bountyId || resultForm.resultURI)}
+            isLoadingAgents={isLoadingAgents}
+            isSwitching={isSwitching}
+            isWriting={isWriting}
+            ownedAgents={ownedAgents}
+            reputationByAgent={reputationByAgent}
+            selectedAgent={selectedAgent}
+            selectedAgentReputation={selectedAgentReputation}
+            selectedBounty={selectedBounty}
+            setClaimForm={setClaimForm}
+            setCreateForm={setCreateForm}
+            onCancelEdit={handleCancelCreateEdit}
+            onClaim={() => {
+              void handleClaimBounty();
+            }}
+            onOpenStudio={toggleStudio}
+            onSelectAgent={handleSelectAgent}
+            onSubmitCreate={() => {
+              void handleCreateBounty();
+            }}
           />
 
           <FeaturedBountiesStrip
@@ -590,62 +649,30 @@ export function BountyBoardApp() {
             isSwitching={isSwitching}
             isWriting={isWriting}
             selectedClaimAgentId={claimForm.agentId}
-            onPrimeClaim={primeClaimFlow}
-            onPrimeEdit={primeEditFlow}
+            onPrimeClaim={openClaimStudioForBounty}
+            onPrimeEdit={openCreateStudioForBounty}
             onQuickClaim={(bountyId, agentId) => {
               void claimSpecificBounty(bountyId, agentId);
             }}
           />
 
-          <section className="grid-two">
-            <BountyCreateStudio
-              createForm={createForm}
-              editingBounty={editingBounty}
+          <section className="compact-grid">
+            <BountyDeliveryStudio
               isSwitching={isSwitching}
               isWriting={isWriting}
-              setCreateForm={setCreateForm}
-              onCancelEdit={resetCreateStudio}
+              preparedResultBounty={preparedResultBounty}
+              resultForm={resultForm}
+              setResultForm={setResultForm}
               onSubmit={() => {
-                void handleCreateBounty();
+                void handleSubmitResult();
               }}
             />
-
-            <div className="stack">
-              <BountyClaimStudio
-                agentLookupError={agentLookupError}
-                claimForm={claimForm}
-                isLoadingAgents={isLoadingAgents}
-                isSwitching={isSwitching}
-                isWriting={isWriting}
-                ownedAgents={ownedAgents}
-                reputationByAgent={reputationByAgent}
-                selectedAgent={selectedAgent}
-                selectedAgentReputation={selectedAgentReputation}
-                selectedBounty={selectedBounty}
-                setClaimForm={setClaimForm}
-                onClaim={() => {
-                  void handleClaimBounty();
-                }}
-                onSelectAgent={handleSelectAgent}
-              />
-
-              <BountyDeliveryStudio
-                isSwitching={isSwitching}
-                isWriting={isWriting}
-                preparedResultBounty={preparedResultBounty}
-                resultForm={resultForm}
-                setResultForm={setResultForm}
-                onSubmit={() => {
-                  void handleSubmitResult();
-                }}
-              />
-            </div>
           </section>
 
           {isConnected ? (
             <MyBountiesWorkspace
               myBounties={myBounties}
-              onEditBounty={primeEditFlow}
+              onEditBounty={openCreateStudioForBounty}
               onOpenReview={openReviewComposer}
               onOpenDiscussion={(bounty) => {
                 void openDiscussion(bounty);
@@ -653,24 +680,44 @@ export function BountyBoardApp() {
             />
           ) : null}
 
+          <NanopaymentsPanel
+            bountyBoardAddress={hasBountyBoardAddress ? bountyBoardAddress : undefined}
+            briefTargets={briefTargets}
+            disputedCount={bounties.filter((bounty) => bounty.status === 5).length}
+            openCount={openCount}
+            reviewQueueCount={reviewQueueCount}
+          />
+
           <section className="panel board-panel">
             <div className="section-header">
               <div>
                 <h2>Live bounty board</h2>
                 <p className="panel-copy">
-                  The board reads recent bounties directly from the deployed contract and now helps
-                  people discover the right task, role, and next move much faster.
+                  The board reads recent bounties directly from the deployed contract. It stays
+                  compact by default and lets you expand into the full list only when you need more
+                  than the latest few tasks.
                 </p>
               </div>
-              <button
-                className="button button-secondary"
-                onClick={() => {
-                  void refreshBoard();
-                }}
-                type="button"
-              >
-                Refresh
-              </button>
+              <div className="section-actions">
+                {shouldShowBoardToggle ? (
+                  <button
+                    className="button button-secondary"
+                    onClick={() => setIsBoardExpanded((value) => !value)}
+                    type="button"
+                  >
+                    {isBoardExpanded ? "Collapse board ▲" : `Show ${hiddenBountyCount} more ▼`}
+                  </button>
+                ) : null}
+                <button
+                  className="button button-secondary"
+                  onClick={() => {
+                    void refreshBoard();
+                  }}
+                  type="button"
+                >
+                  Refresh
+                </button>
+              </div>
             </div>
 
             <BountyBoardControls
@@ -700,7 +747,7 @@ export function BountyBoardApp() {
               </div>
             ) : (
               <div className="bounty-list">
-                {filteredBounties.map((bounty) => {
+                {visibleBounties.map((bounty) => {
                   const bountyKey = bounty.id.toString();
 
                   return (
@@ -735,8 +782,8 @@ export function BountyBoardApp() {
                       }}
                       onOpenReviewComposer={openReviewComposer}
                       onOpenReputationComposer={openReputationComposer}
-                      onPrimeClaim={primeClaimFlow}
-                      onPrimeEdit={primeEditFlow}
+                      onPrimeClaim={openClaimStudioForBounty}
+                      onPrimeEdit={openCreateStudioForBounty}
                       onPrimeSubmit={primeResultFlow}
                       onQuickClaim={(bountyId, agentId) => {
                         void claimSpecificBounty(bountyId, agentId);
@@ -760,6 +807,12 @@ export function BountyBoardApp() {
                 })}
               </div>
             )}
+
+            {shouldShowBoardToggle && !isBoardExpanded ? (
+              <div className="board-collapse-note">
+                Showing the 3 newest tasks. Expand the board to browse the full live set.
+              </div>
+            ) : null}
           </section>
 
           <section className="grid-two compact-grid">
@@ -778,18 +831,11 @@ export function BountyBoardApp() {
           <div className="panel">
             <h2>Useful links</h2>
               <div className="link-list">
-                <a {...externalLinkProps} href="https://docs.arc.network/arc/tutorials/register-your-first-ai-agent">
-                  Register your first AI agent
-                </a>
-                <a {...externalLinkProps} href="https://docs.arc.network/arc/tutorials/deploy-on-arc">
-                  Deploy on Arc
-                </a>
-                <a {...externalLinkProps} href="https://developers.circle.com/gateway/nanopayments">
-                  Circle Nanopayments
-                </a>
-                <a {...externalLinkProps} href="https://faucet.circle.com">
-                  Circle faucet
-                </a>
+                {usefulLinks.map((link) => (
+                  <a {...externalLinkProps} href={link.url} key={link.url}>
+                    {link.label}
+                  </a>
+                ))}
                 {lastHash ? (
                   <a {...externalLinkProps} href={explorerTxLink(lastHash)}>
                     Latest confirmed transaction

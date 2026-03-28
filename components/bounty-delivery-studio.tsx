@@ -28,10 +28,10 @@ export function BountyDeliveryStudio({
 }: BountyDeliveryStudioProps) {
   return (
     <div className="panel" id="delivery-studio">
-      <h2>Submit result</h2>
+      <h2>Delivery queue</h2>
       <p className="panel-copy">
-        After claim, submit the result URI here. You can also prime this form directly from a
-        claimed bounty card.
+        After claim, submit the result URI here. The queue stays available as a compact follow-up
+        workspace while create and claim now live in the top action console.
       </p>
 
       {preparedResultBounty ? (
