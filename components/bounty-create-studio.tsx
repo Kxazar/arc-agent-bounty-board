@@ -76,6 +76,16 @@ export function BountyCreateStudio({
           />
         </label>
         <label className="field">
+          <span>Milestone split (%)</span>
+          <input
+            value={createForm.milestoneSplit}
+            onChange={(event) =>
+              setCreateForm((current) => ({ ...current, milestoneSplit: event.target.value }))
+            }
+            placeholder="100 or 40,30,30"
+          />
+        </label>
+        <label className="field">
           <span>Contact</span>
           <input
             value={createForm.contact}
@@ -156,6 +166,7 @@ export function BountyCreateStudio({
 
       <p className="muted-line">
         Claim window now accepts any supplier-defined term, including longer discovery periods like 4 months.
+        Milestone split accepts 1 to 3 whole-number percentages that add up to 100.
       </p>
 
       <div className="card-actions">

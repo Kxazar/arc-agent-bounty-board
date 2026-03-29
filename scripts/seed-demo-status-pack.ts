@@ -16,6 +16,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { arcBountyBoardAbi, erc20Abi, identityRegistryAbi } from "../lib/abi";
 import { ARC_CONTRACTS, arcTestnet } from "../lib/arc";
 import { buildBountyNoteUri, buildMessageUri, buildMetadataUri, readOwnedAgents } from "../lib/agent-tools";
+import { percentageMilestonePlan, singleMilestonePlan } from "./lib/milestone-plan";
 
 const DEFAULTS = {
   rpcUrl: "https://rpc.testnet.arc.network",
@@ -24,7 +25,20 @@ const DEFAULTS = {
   maxPriorityFeeGwei: "2"
 } as const;
 
-const statusPack = [
+type StatusPackItem = {
+  title: string;
+  summary: string;
+  contact: string;
+  reward: string;
+  status: "open" | "submitted" | "revision_requested" | "disputed" | "submitted_second_milestone";
+  resultUri?: string;
+  followupResultUri?: string;
+  reviewNote?: string;
+  disputeNote?: string;
+  milestoneSplit?: readonly number[];
+};
+
+const statusPack: readonly StatusPackItem[] = [
   {
     title: "Open demo | audit one sponsor note",
     summary: "A clean open task kept untouched so the board always has a simple open-state bounty for demos.",
@@ -38,6 +52,7 @@ const statusPack = [
     contact: "demo.review",
     reward: "0.14",
     status: "submitted",
+    milestoneSplit: [50, 50],
     resultUri: "https://example.com/arc-demo/submitted-intake-payload"
   },
   {
@@ -57,8 +72,20 @@ const statusPack = [
     status: "disputed",
     resultUri: "https://example.com/arc-demo/dispute-brief",
     disputeNote: "Sponsor and claimant disagree on whether the original scope required a structured webhook payload."
+  },
+  {
+    title: "Milestone demo | tranche two review pending",
+    summary:
+      "A multi-step bounty with the first milestone already released and the second submission currently waiting on sponsor review.",
+    contact: "demo.milestone",
+    reward: "0.18",
+    status: "submitted_second_milestone",
+    milestoneSplit: [40, 60],
+    resultUri: "https://example.com/arc-demo/milestone-pass-1",
+    followupResultUri: "https://example.com/arc-demo/milestone-pass-2",
+    reviewNote: "Milestone one accepted. Keep the same format for the second tranche."
   }
-] as const;
+];
 
 function loadEnvironment() {
   loadEnv({ path: path.join(process.cwd(), ".env.local"), override: false, quiet: true });
@@ -210,6 +237,9 @@ async function main() {
 
   for (const [index, bounty] of statusPack.entries()) {
     const bountyId = nextBountyId + BigInt(index);
+    const milestonePlan = bounty.milestoneSplit
+      ? percentageMilestonePlan(payouts[index], bounty.milestoneSplit)
+      : singleMilestonePlan(payouts[index]);
     const createHash = await walletClient.writeContract({
       address: boardAddress,
       abi: arcBountyBoardAbi,
@@ -218,12 +248,15 @@ async function main() {
         buildMetadataUri({
           title: bounty.title,
           summary: bounty.summary,
-          contact: bounty.contact
+          contact: bounty.contact,
+          milestoneSplit: bounty.milestoneSplit?.join(", ")
         }),
         payouts[index],
         120 * 24 * 3600,
         48 * 3600,
-        24 * 3600
+        24 * 3600,
+        milestonePlan.milestoneAmounts,
+        milestonePlan.milestoneCount
       ],
       maxFeePerGas,
       maxPriorityFeePerGas,
@@ -269,6 +302,10 @@ async function main() {
     await publicClient.waitForTransactionReceipt({ hash: kickoffMessageHash });
     console.log(`   message tx: ${arcTestnet.blockExplorers.default.url}/tx/${kickoffMessageHash}`);
 
+    if (!bounty.resultUri) {
+      throw new Error(`Status pack item "${bounty.title}" is missing resultUri.`);
+    }
+
     const submitHash = await walletClient.writeContract({
       address: boardAddress,
       abi: arcBountyBoardAbi,
@@ -286,7 +323,68 @@ async function main() {
       continue;
     }
 
+    if (bounty.status === "submitted_second_milestone") {
+      if (!bounty.reviewNote || !bounty.followupResultUri) {
+        throw new Error(`Milestone demo item "${bounty.title}" is missing reviewNote or followupResultUri.`);
+      }
+
+      const approveFirstMilestoneHash = await walletClient.writeContract({
+        address: boardAddress,
+        abi: arcBountyBoardAbi,
+        functionName: "approveBounty",
+        args: [
+          bountyId,
+          buildBountyNoteUri({
+            kind: "review_passed",
+            note: bounty.reviewNote
+          })
+        ],
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        account
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: approveFirstMilestoneHash });
+      console.log(`   milestone 1 approval tx: ${arcTestnet.blockExplorers.default.url}/tx/${approveFirstMilestoneHash}`);
+
+      const milestoneMessageHash = await walletClient.writeContract({
+        address: boardAddress,
+        abi: arcBountyBoardAbi,
+        functionName: "postBountyMessage",
+        args: [
+          bountyId,
+          buildMessageUri({
+            text: "Milestone one cleared. Preparing the second tranche handoff now."
+          })
+        ],
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        account
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: milestoneMessageHash });
+      console.log(`   milestone 2 message tx: ${arcTestnet.blockExplorers.default.url}/tx/${milestoneMessageHash}`);
+
+      const secondSubmitHash = await walletClient.writeContract({
+        address: boardAddress,
+        abi: arcBountyBoardAbi,
+        functionName: "submitResult",
+        args: [bountyId, bounty.followupResultUri],
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        account
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: secondSubmitHash });
+      console.log(`   milestone 2 submit tx: ${arcTestnet.blockExplorers.default.url}/tx/${secondSubmitHash}`);
+      continue;
+    }
+
     if (bounty.status === "revision_requested") {
+      if (!bounty.reviewNote) {
+        throw new Error(`Revision demo item "${bounty.title}" is missing reviewNote.`);
+      }
+
       const requestChangesHash = await walletClient.writeContract({
         address: boardAddress,
         abi: arcBountyBoardAbi,
@@ -309,6 +407,10 @@ async function main() {
     }
 
     if (bounty.status === "disputed") {
+      if (!bounty.disputeNote) {
+        throw new Error(`Dispute demo item "${bounty.title}" is missing disputeNote.`);
+      }
+
       const disputeHash = await walletClient.writeContract({
         address: boardAddress,
         abi: arcBountyBoardAbi,

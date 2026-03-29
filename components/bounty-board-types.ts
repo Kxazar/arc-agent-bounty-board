@@ -23,11 +23,15 @@ export type BountyView = {
   disputeRaisedBy: Address;
   agentId: bigint;
   payoutAmount: bigint;
+  remainingAmount: bigint;
   claimDeadline: bigint;
   submissionDeadline: bigint;
   reviewDeadline: bigint;
   submissionWindow: number;
   reviewWindow: number;
+  milestoneCount: number;
+  releasedMilestones: number;
+  milestoneAmounts: [bigint, bigint, bigint];
   status: number;
   metadataURI: string;
   resultURI: string;
@@ -45,6 +49,7 @@ export type CreateForm = {
   summary: string;
   contact: string;
   reward: string;
+  milestoneSplit: string;
   claimWindowValue: string;
   claimWindowUnit: "hours" | "days" | "weeks" | "months";
   submissionHours: string;
@@ -119,4 +124,27 @@ export type ActionCenterItem = {
   actionKind: ActionCenterActionKind;
   bounty?: BountyView;
   allowDiscussion?: boolean;
+};
+
+export type SponsorProfileSummary = {
+  creator: Address;
+  createdCount: number;
+  openCount: number;
+  inReviewCount: number;
+  disputedCount: number;
+  settledCount: number;
+  revisionCount: number;
+  liveEscrow: bigint;
+  releasedVolume: bigint;
+};
+
+export type AgentProfileSummary = {
+  agentId: string;
+  activeClaims: number;
+  completedClaims: number;
+  disputedClaims: number;
+  revisionsHandled: number;
+  earningsReleased: bigint;
+  reputationScore: number | null;
+  feedbackCount: number;
 };

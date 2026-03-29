@@ -67,6 +67,9 @@ export function BountyReviewPanel({
     );
   }
 
+  const isFinalMilestone =
+    bounty.milestoneCount <= 1 || bounty.releasedMilestones + 1 >= bounty.milestoneCount;
+
   return (
     <div className="review-panel">
       <div className="post-action-head">
@@ -90,7 +93,7 @@ export function BountyReviewPanel({
         {showCreatorActions ? (
           <>
             <button className="button button-primary" disabled={isWriting} onClick={onApprove} type="button">
-              Pass review and release
+              {isFinalMilestone ? "Pass review and release" : "Approve milestone and release"}
             </button>
             <button className="button button-secondary" disabled={isWriting} onClick={onRequestChanges} type="button">
               Request changes

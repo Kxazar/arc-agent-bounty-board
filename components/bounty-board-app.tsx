@@ -2,27 +2,32 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { formatUnits } from "viem";
+import { formatUnits, type Address } from "viem";
 
 import { BountyAboutSection } from "@/components/bounty-about-section";
 import { BountyActionConsole, type ActionStudioKey } from "@/components/bounty-action-console";
+import { BountyActionCenter } from "@/components/bounty-action-center";
 import { BountyCard } from "@/components/bounty-card";
 import { externalLinkProps, statusLabels } from "@/components/bounty-board-config";
 import { BountyBoardControls } from "@/components/bounty-board-controls";
 import { BountyDeliveryStudio } from "@/components/bounty-delivery-studio";
 import { BountyDiscussionModal } from "@/components/bounty-discussion-modal";
 import { BountyMarketOverview } from "@/components/bounty-market-overview";
+import { BountyProfileHub } from "@/components/bounty-profile-hub";
 import { BountyRoadmapSection } from "@/components/bounty-roadmap-section";
 import { FeaturedBountiesStrip } from "@/components/featured-bounties-strip";
 import { MyBountiesWorkspace } from "@/components/my-bounties-workspace";
 import { NanopaymentsPanel } from "@/components/nanopayments-panel";
 import type {
+  ActionCenterItem,
   AgentTrustSummary,
+  AgentProfileSummary,
   BoardScopeFilter,
   BoardSortOption,
   BoardStatusFilter,
   BountyView,
   FeaturedBountySpotlight,
+  SponsorProfileSummary,
   SponsorTrustSummary,
   TrustTone
 } from "@/components/bounty-board-types";
@@ -48,6 +53,10 @@ function fallbackReputationDraft(title: string) {
     tag2: "arc_bounty",
     note: `Settled "${title}" successfully on Arc.`
   };
+}
+
+function getReleasedAmount(bounty: BountyView) {
+  return bounty.payoutAmount - bounty.remainingAmount;
 }
 
 const statusCodeByFilter: Record<Exclude<BoardStatusFilter, "all">, number> = {
@@ -112,10 +121,19 @@ function buildSponsorTrustMap(bounties: BountyView[]) {
 
     if (bounty.status === 4) {
       current.settledCount += 1;
-      current.totalPaidOut += bounty.payoutAmount;
-    } else if (bounty.status === 6) {
+    }
+
+    const releasedAmount = getReleasedAmount(bounty);
+
+    if (releasedAmount > 0n) {
+      current.totalPaidOut += releasedAmount;
+    }
+
+    if (bounty.status === 6) {
       current.cancelledCount += 1;
-    } else {
+    }
+
+    if (bounty.status !== 4 && bounty.status !== 6) {
       current.liveCount += 1;
     }
 
@@ -128,6 +146,231 @@ function buildSponsorTrustMap(bounties: BountyView[]) {
       return [key, { ...value, ...badge } satisfies SponsorTrustSummary];
     })
   ) as Record<string, SponsorTrustSummary>;
+}
+
+function buildSponsorProfileSummary(bounties: BountyView[], creator: Address): SponsorProfileSummary | null {
+  const created = bounties.filter((bounty) => bounty.creator.toLowerCase() === creator.toLowerCase());
+
+  if (created.length === 0) {
+    return null;
+  }
+
+  return {
+    creator,
+    createdCount: created.length,
+    openCount: created.filter((bounty) => bounty.status === 0 || bounty.status === 1).length,
+    inReviewCount: created.filter((bounty) => bounty.status === 2).length,
+    disputedCount: created.filter((bounty) => bounty.status === 5).length,
+    settledCount: created.filter((bounty) => bounty.status === 4).length,
+    revisionCount: created.filter((bounty) => bounty.status === 3).length,
+    liveEscrow: created
+      .filter((bounty) => bounty.status !== 4 && bounty.status !== 6)
+      .reduce((sum, bounty) => sum + bounty.remainingAmount, 0n),
+    releasedVolume: created.reduce((sum, bounty) => sum + getReleasedAmount(bounty), 0n)
+  };
+}
+
+function buildAgentProfileSummary(
+  bounties: BountyView[],
+  agentId: string | null,
+  reputationByAgent: Record<string, ReputationSummary>
+): AgentProfileSummary | null {
+  if (!agentId) {
+    return null;
+  }
+
+  const scoped = bounties.filter((bounty) => bounty.agentId.toString() === agentId);
+
+  if (scoped.length === 0) {
+    const reputation = reputationByAgent[agentId];
+
+    return {
+      agentId,
+      activeClaims: 0,
+      completedClaims: 0,
+      disputedClaims: 0,
+      revisionsHandled: 0,
+      earningsReleased: 0n,
+      reputationScore: reputation?.score ?? null,
+      feedbackCount: reputation?.count ?? 0
+    };
+  }
+
+  const reputation = reputationByAgent[agentId];
+
+  return {
+    agentId,
+    activeClaims: scoped.filter((bounty) => bounty.status === 1 || bounty.status === 2 || bounty.status === 3).length,
+    completedClaims: scoped.filter((bounty) => bounty.status === 4).length,
+    disputedClaims: scoped.filter((bounty) => bounty.status === 5).length,
+    revisionsHandled: scoped.filter((bounty) => bounty.status === 3).length,
+    earningsReleased: scoped.reduce((sum, bounty) => sum + getReleasedAmount(bounty), 0n),
+    reputationScore: reputation?.score ?? null,
+    feedbackCount: reputation?.count ?? 0
+  };
+}
+
+function buildActionCenterItems(params: {
+  address?: Address;
+  bounties: BountyView[];
+  isConnected: boolean;
+  isOnArc: boolean;
+  selectedClaimAgentId: string;
+  reputationReceipts: Record<string, string>;
+}): ActionCenterItem[] {
+  const { address, bounties, isConnected, isOnArc, selectedClaimAgentId, reputationReceipts } = params;
+
+  if (!isConnected) {
+    return [
+      {
+        id: "connect-wallet",
+        tone: "neutral",
+        eyebrow: "Wallet",
+        title: "Connect a wallet to unlock sponsor and claimant actions",
+        detail: "Once connected, the board can prioritize reviews, submissions, releases, and reputation tasks for you.",
+        meta: "Start here",
+        actionLabel: "Connect wallet",
+        actionKind: "connect"
+      }
+    ];
+  }
+
+  if (!isOnArc) {
+    return [
+      {
+        id: "switch-network",
+        tone: "warm",
+        eyebrow: "Network",
+        title: "Switch to Arc Testnet",
+        detail: "The action inbox is only meaningful when your wallet is on Arc and ready to sign live board actions.",
+        meta: "Arc required",
+        actionLabel: "Switch network",
+        actionKind: "switch"
+      }
+    ];
+  }
+
+  if (!address) {
+    return [];
+  }
+
+  const lowerAddress = address.toLowerCase();
+  const nowMs = Date.now();
+  const items: ActionCenterItem[] = [];
+
+  for (const bounty of bounties) {
+    const bountyId = bounty.id.toString();
+    const isCreator = bounty.creator.toLowerCase() === lowerAddress;
+    const isClaimant =
+      bounty.claimant.toLowerCase() === lowerAddress && bounty.claimant.toLowerCase() !== "0x0000000000000000000000000000000000000000";
+
+    if (isCreator && bounty.status === 2) {
+      items.push({
+        id: `review-${bountyId}`,
+        tone: "accent",
+        eyebrow: "Sponsor review",
+        title: `Review bounty #${bountyId}`,
+        detail: `A submission is waiting on your decision for milestone ${Math.min(bounty.releasedMilestones + 1, bounty.milestoneCount)}.`,
+        meta: `Review by ${new Date(Number(bounty.reviewDeadline) * 1000).toLocaleDateString()}`,
+        actionLabel: "Open review",
+        actionKind: "approve",
+        bounty,
+        allowDiscussion: true
+      });
+    }
+
+    if (isClaimant && (bounty.status === 1 || bounty.status === 3)) {
+      items.push({
+        id: `submit-${bountyId}`,
+        tone: bounty.status === 3 ? "warm" : "accent",
+        eyebrow: bounty.status === 3 ? "Revision" : "Delivery",
+        title: `Submit milestone ${Math.min(bounty.releasedMilestones + 1, bounty.milestoneCount)} for bounty #${bountyId}`,
+        detail: "Your claimant slot is active and the next milestone payout depends on a fresh result submission.",
+        meta: `Due ${new Date(Number(bounty.submissionDeadline) * 1000).toLocaleDateString()}`,
+        actionLabel: "Open delivery",
+        actionKind: "submit",
+        bounty,
+        allowDiscussion: true
+      });
+    }
+
+    if (isClaimant && bounty.status === 2 && Number(bounty.reviewDeadline) * 1000 <= nowMs) {
+      items.push({
+        id: `release-${bountyId}`,
+        tone: "warm",
+        eyebrow: "Timeout",
+        title: `Release milestone payout for bounty #${bountyId}`,
+        detail: "The sponsor review window has elapsed, so you can move the escrow forward from the claimant side.",
+        meta: "Review timed out",
+        actionLabel: "Release payout",
+        actionKind: "release",
+        bounty,
+        allowDiscussion: true
+      });
+    }
+
+    if (isCreator && bounty.status === 0 && Number(bounty.claimDeadline) * 1000 <= nowMs) {
+      items.push({
+        id: `recover-open-${bountyId}`,
+        tone: "warm",
+        eyebrow: "Expired claim window",
+        title: `Recover idle escrow for bounty #${bountyId}`,
+        detail: "The bounty was never claimed, so you can reclaim the remaining funds or revise the scope.",
+        meta: "Recovery available",
+        actionLabel: "Recover funds",
+        actionKind: "recover",
+        bounty
+      });
+    }
+
+    if (isCreator && (bounty.status === 1 || bounty.status === 3) && Number(bounty.submissionDeadline) * 1000 <= nowMs) {
+      items.push({
+        id: `recover-claim-${bountyId}`,
+        tone: "warm",
+        eyebrow: "Missed submit window",
+        title: `Recover remaining escrow for bounty #${bountyId}`,
+        detail: "The claimant missed the current submission window, so the unreleased part of the bounty can be reclaimed.",
+        meta: `Escrow left ${bounty.remainingAmount > 0n ? "live" : "empty"}`,
+        actionLabel: "Recover escrow",
+        actionKind: "recover",
+        bounty
+      });
+    }
+
+    if (isCreator && bounty.status === 4 && bounty.agentId > 0n && !reputationReceipts[bountyId]) {
+      items.push({
+        id: `reputation-${bountyId}`,
+        tone: "accent",
+        eyebrow: "Trust loop",
+        title: `Post reputation for bounty #${bountyId}`,
+        detail: "Settlement is complete. Recording reputation turns this finished job into reusable trust for the next claim.",
+        meta: `Agent #${bounty.agentId.toString()}`,
+        actionLabel: "Post reputation",
+        actionKind: "reputation",
+        bounty
+      });
+    }
+  }
+
+  if (items.length === 0 && selectedClaimAgentId !== "") {
+    const claimable = bounties.find((bounty) => bounty.status === 0 && bounty.creator.toLowerCase() !== lowerAddress);
+
+    if (claimable) {
+      items.push({
+        id: `claim-${claimable.id.toString()}`,
+        tone: "neutral",
+        eyebrow: "Claim ready",
+        title: `Agent #${selectedClaimAgentId} is ready for bounty #${claimable.id.toString()}`,
+        detail: "You already selected an Arc agent, so the next viable open bounty can be claimed in one step.",
+        meta: "Quick path",
+        actionLabel: "Prepare claim",
+        actionKind: "claim",
+        bounty: claimable
+      });
+    }
+  }
+
+  return items.slice(0, 5);
 }
 
 function buildAgentTrustEntries(reputationByAgent: Record<string, ReputationSummary>): AgentTrustSummary[] {
@@ -410,15 +653,27 @@ export function BountyBoardApp() {
   const featuredBounties = buildFeaturedBounties(bounties, sponsorTrustByCreator);
   const liveEscrow = bounties
     .filter((bounty) => bounty.status === 0 || bounty.status === 1 || bounty.status === 2 || bounty.status === 3 || bounty.status === 5)
-    .reduce((sum, bounty) => sum + bounty.payoutAmount, 0n);
-  const settledVolume = bounties
-    .filter((bounty) => bounty.status === 4)
-    .reduce((sum, bounty) => sum + bounty.payoutAmount, 0n);
+    .reduce((sum, bounty) => sum + bounty.remainingAmount, 0n);
+  const settledVolume = bounties.reduce((sum, bounty) => sum + getReleasedAmount(bounty), 0n);
   const hasActiveBoardFilters =
     normalizedSearch !== "" || statusFilter !== "all" || scopeFilter !== "all" || sortBy !== "newest";
   const shouldShowBoardToggle = filteredBounties.length > 3 && !hasActiveBoardFilters;
   const visibleBounties = shouldShowBoardToggle && !isBoardExpanded ? filteredBounties.slice(0, 3) : filteredBounties;
   const hiddenBountyCount = Math.max(0, filteredBounties.length - visibleBounties.length);
+  const actionCenterItems = buildActionCenterItems({
+    address,
+    bounties,
+    isConnected,
+    isOnArc,
+    selectedClaimAgentId: claimForm.agentId,
+    reputationReceipts
+  });
+  const sponsorProfile = address ? buildSponsorProfileSummary(bounties, address) : null;
+  const agentProfile = buildAgentProfileSummary(
+    bounties,
+    selectedAgent?.agentId.toString() ?? (ownedAgents[0]?.agentId.toString() ?? null),
+    reputationByAgent
+  );
   const usefulLinks = [
     {
       label: "Register your first AI agent",
@@ -643,6 +898,65 @@ export function BountyBoardApp() {
             }}
           />
 
+          <BountyActionCenter
+            isConnected={isConnected}
+            items={actionCenterItems}
+            onOpenDiscussion={(bounty) => {
+              void openDiscussion(bounty);
+            }}
+            onRunAction={(item) => {
+              if (item.actionKind === "connect") {
+                connectWallet();
+                return;
+              }
+
+              if (item.actionKind === "switch") {
+                void switchToArc();
+                return;
+              }
+
+              if (!item.bounty) {
+                return;
+              }
+
+              if (item.actionKind === "claim") {
+                openClaimStudioForBounty(item.bounty.id);
+                return;
+              }
+
+              if (item.actionKind === "submit") {
+                primeResultFlow(item.bounty.id);
+                return;
+              }
+
+              if (item.actionKind === "approve") {
+                openReviewComposer(item.bounty);
+                return;
+              }
+
+              if (item.actionKind === "recover") {
+                if (item.bounty.status === 0) {
+                  void cancelUnclaimedBounty(item.bounty);
+                } else {
+                  void reclaimExpiredClaim(item.bounty);
+                }
+                return;
+              }
+
+              if (item.actionKind === "release") {
+                void releaseAfterReviewTimeout(item.bounty);
+                return;
+              }
+
+              if (item.actionKind === "reputation") {
+                openReputationComposer(item.bounty);
+                return;
+              }
+
+              openCreateStudioForBounty(item.bounty);
+            }}
+          />
+
           <FeaturedBountiesStrip
             connectedAddress={address}
             featuredBounties={featuredBounties}
@@ -668,6 +982,8 @@ export function BountyBoardApp() {
               }}
             />
           </section>
+
+          <BountyProfileHub agentProfile={agentProfile} sponsorProfile={sponsorProfile} />
 
           {isConnected ? (
             <MyBountiesWorkspace

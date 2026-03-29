@@ -35,7 +35,7 @@ export function BountyMarketOverview({
           <strong>{formatUsdc(liveEscrow)}</strong>
         </div>
         <div className="metric-pill">
-          <span>Settled volume</span>
+          <span>Released volume</span>
           <strong>{formatUsdc(settledVolume)}</strong>
         </div>
         <div className="metric-pill">

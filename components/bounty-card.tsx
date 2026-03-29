@@ -383,6 +383,15 @@ export function BountyCard({
   const windowExpired = activeWindow ? Number(activeWindow.value) * 1000 <= Date.now() : false;
   const windowRelative = activeWindow ? describeRelativeTime(activeWindow.value) : null;
   const agentTrustBadge = getAgentTrustBadge(reputation);
+  const releasedAmount = bounty.payoutAmount - bounty.remainingAmount;
+  const activeMilestoneNumber =
+    bounty.releasedMilestones >= bounty.milestoneCount
+      ? bounty.milestoneCount
+      : bounty.releasedMilestones + 1;
+  const activeMilestoneAmount =
+    bounty.milestoneCount > 0
+      ? bounty.milestoneAmounts[Math.min(bounty.releasedMilestones, bounty.milestoneCount - 1)]
+      : 0n;
   const nextAction = getNextActionCopy({
     bounty,
     isConnected,
@@ -425,6 +434,16 @@ export function BountyCard({
       </div>
 
       <div className="signal-row">
+        <div className="signal-chip">
+          <span className="trust-badge trust-neutral">
+            {bounty.milestoneCount > 1 ? `Milestones ${bounty.releasedMilestones}/${bounty.milestoneCount}` : "Single payout"}
+          </span>
+          <span>
+            Released {formatUsdc(releasedAmount)}
+            {bounty.milestoneCount > 1 ? ` | Active tranche ${activeMilestoneNumber}: ${formatUsdc(activeMilestoneAmount)}` : ""}
+          </span>
+        </div>
+
         {sponsorTrust ? (
           <div className="signal-chip">
             <span className={`trust-badge trust-${sponsorTrust.tone}`}>{sponsorTrust.badge}</span>
@@ -464,6 +483,10 @@ export function BountyCard({
         <div>
           <span>Agent ID</span>
           <strong>{bounty.agentId === 0n ? "Not set" : bounty.agentId.toString()}</strong>
+        </div>
+        <div>
+          <span>Escrow left</span>
+          <strong>{formatUsdc(bounty.remainingAmount)}</strong>
         </div>
         <div>
           <span>Claim deadline</span>

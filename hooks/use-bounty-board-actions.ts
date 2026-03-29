@@ -94,9 +94,100 @@ export function useBountyBoardActions({
     setCreateForm({ ...defaultCreateForm });
   }
 
-  function deriveClaimHours(deadline: bigint) {
+function deriveClaimHours(deadline: bigint) {
     const remainingSeconds = Number(deadline) - Math.floor(Date.now() / 1000);
     return Math.max(1, Math.ceil(remainingSeconds / 3600)).toString();
+  }
+
+  function deriveMilestoneSplit(
+    payoutAmount: bigint,
+    milestoneAmounts: readonly [bigint, bigint, bigint],
+    milestoneCount: number
+  ) {
+    if (milestoneCount <= 1 || payoutAmount <= 0n) {
+      return "100";
+    }
+
+    const percentages: number[] = [];
+    let assigned = 0;
+
+    for (let index = 0; index < milestoneCount; index += 1) {
+      if (index === milestoneCount - 1) {
+        percentages.push(100 - assigned);
+        break;
+      }
+
+      const percent = Number((milestoneAmounts[index] * 100n) / payoutAmount);
+      percentages.push(percent);
+      assigned += percent;
+    }
+
+    return percentages.join(", ");
+  }
+
+  function resolveMilestonePlan(payoutAmount: bigint) {
+    const raw = createForm.milestoneSplit.trim();
+
+    if (!raw) {
+      const single = payoutAmount as bigint;
+      return {
+        milestoneAmounts: [single, 0n, 0n] as [bigint, bigint, bigint],
+        milestoneCount: 1
+      };
+    }
+
+    const parts = raw
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length === 0 || parts.length > 3) {
+      throw new Error("Milestone split must contain between 1 and 3 comma-separated percentages.");
+    }
+
+    const percentages = parts.map((part, index) => {
+      if (!/^\d+$/.test(part)) {
+        throw new Error(`Milestone percentage #${index + 1} must be a whole number.`);
+      }
+
+      const value = Number(part);
+
+      if (!Number.isSafeInteger(value) || value <= 0) {
+        throw new Error(`Milestone percentage #${index + 1} must be greater than zero.`);
+      }
+
+      return value;
+    });
+
+    const totalPercentage = percentages.reduce((sum, value) => sum + value, 0);
+
+    if (totalPercentage !== 100) {
+      throw new Error("Milestone percentages must add up to 100.");
+    }
+
+    const milestoneAmounts = [0n, 0n, 0n] as [bigint, bigint, bigint];
+    let allocated = 0n;
+
+    for (let index = 0; index < percentages.length; index += 1) {
+      const isLast = index === percentages.length - 1;
+      const amount = isLast ? payoutAmount - allocated : (payoutAmount * BigInt(percentages[index])) / 100n;
+
+      if (amount <= 0n) {
+        throw new Error("Each milestone must release a positive amount.");
+      }
+
+      milestoneAmounts[index] = amount;
+      allocated += amount;
+    }
+
+    if (allocated !== payoutAmount) {
+      throw new Error("Milestone split does not match the total reward.");
+    }
+
+    return {
+      milestoneAmounts,
+      milestoneCount: percentages.length
+    };
   }
 
   function deriveClaimWindowInput(deadline: bigint): Pick<CreateForm, "claimWindowValue" | "claimWindowUnit"> {
@@ -175,6 +266,11 @@ export function useBountyBoardActions({
       summary: bounty.summary,
       contact: bounty.contact,
       reward: formatUnits(bounty.payoutAmount, 6),
+      milestoneSplit: deriveMilestoneSplit(
+        bounty.payoutAmount,
+        bounty.milestoneAmounts,
+        bounty.milestoneCount
+      ),
       claimWindowValue: claimWindowInput.claimWindowValue,
       claimWindowUnit: claimWindowInput.claimWindowUnit,
       submissionHours: Math.max(1, Math.ceil(bounty.submissionWindow / 3600)).toString(),
@@ -252,6 +348,7 @@ export function useBountyBoardActions({
       const submissionWindow =
         parsePositiveWholeNumber(createForm.submissionHours, "Submission window") * 3600;
       const reviewWindow = parsePositiveWholeNumber(createForm.reviewHours, "Review window") * 3600;
+      const milestonePlan = resolveMilestonePlan(payoutAmount);
       const editingBounty = bounties.find((bounty) => bounty.id.toString() === editingBountyId) ?? null;
       const createdBountyId = typeof nextBountyId === "bigint" ? nextBountyId : null;
       const additionalEscrowNeeded =
@@ -289,7 +386,8 @@ export function useBountyBoardActions({
       const metadataURI = buildMetadataUri({
         title,
         summary,
-        contact
+        contact,
+        milestoneSplit: createForm.milestoneSplit
       });
 
       if (editingBounty) {
@@ -305,7 +403,9 @@ export function useBountyBoardActions({
             payoutAmount,
             claimWindow,
             submissionWindow,
-            reviewWindow
+            reviewWindow,
+            milestonePlan.milestoneAmounts,
+            milestonePlan.milestoneCount
           ],
           chainId: arcTestnet.id
         });
@@ -323,7 +423,15 @@ export function useBountyBoardActions({
         address: resolvedBoardAddress,
         abi: arcBountyBoardAbi,
         functionName: "createBounty",
-        args: [metadataURI, payoutAmount, claimWindow, submissionWindow, reviewWindow],
+        args: [
+          metadataURI,
+          payoutAmount,
+          claimWindow,
+          submissionWindow,
+          reviewWindow,
+          milestonePlan.milestoneAmounts,
+          milestonePlan.milestoneCount
+        ],
         chainId: arcTestnet.id
       });
 
@@ -462,7 +570,13 @@ export function useBountyBoardActions({
       await waitForReceipt(hash);
       await refreshBoard();
 
-      if ((functionName === "approveBounty" || functionName === "releaseAfterReviewTimeout") && bounty.agentId > 0n) {
+      const completesBounty = bounty.releasedMilestones + 1 >= bounty.milestoneCount;
+
+      if (
+        (functionName === "approveBounty" || functionName === "releaseAfterReviewTimeout") &&
+        completesBounty &&
+        bounty.agentId > 0n
+      ) {
         openReputationComposer(bounty);
         setNotice("Payout approved. Finish the flow with an onchain reputation note.");
       } else {
@@ -496,11 +610,15 @@ export function useBountyBoardActions({
       await refreshBoard();
       setActiveReviewBountyId(null);
 
-      if (bounty.agentId > 0n) {
+      const completesBounty = bounty.releasedMilestones + 1 >= bounty.milestoneCount;
+
+      if (completesBounty && bounty.agentId > 0n) {
         openReputationComposer(bounty);
+        setNotice("Review passed and payout released. Finish the flow with an onchain reputation note.");
+        return;
       }
 
-      setNotice("Review passed and payout released. Finish the flow with an onchain reputation note.");
+      setNotice("Milestone approved and payout released. The bounty stays live for the next tranche.");
     } catch (actionError) {
       setError(getErrorMessage(actionError));
     }

@@ -34,11 +34,15 @@ export const arcBountyBoardAbi = [
           { name: "disputeRaisedBy", type: "address" },
           { name: "agentId", type: "uint256" },
           { name: "payoutAmount", type: "uint128" },
+          { name: "remainingAmount", type: "uint128" },
           { name: "claimDeadline", type: "uint64" },
           { name: "submissionDeadline", type: "uint64" },
           { name: "reviewDeadline", type: "uint64" },
           { name: "submissionWindow", type: "uint32" },
           { name: "reviewWindow", type: "uint32" },
+          { name: "milestoneCount", type: "uint8" },
+          { name: "releasedMilestones", type: "uint8" },
+          { name: "milestoneAmounts", type: "uint128[3]" },
           { name: "status", type: "uint8" },
           { name: "metadataURI", type: "string" },
           { name: "resultURI", type: "string" },
@@ -57,7 +61,9 @@ export const arcBountyBoardAbi = [
       { name: "payoutAmount", type: "uint128" },
       { name: "claimWindow", type: "uint32" },
       { name: "submissionWindow", type: "uint32" },
-      { name: "reviewWindow", type: "uint32" }
+      { name: "reviewWindow", type: "uint32" },
+      { name: "milestoneAmounts", type: "uint128[3]" },
+      { name: "milestoneCount", type: "uint8" }
     ],
     outputs: [{ name: "bountyId", type: "uint256" }]
   },
@@ -81,7 +87,9 @@ export const arcBountyBoardAbi = [
       { name: "payoutAmount", type: "uint128" },
       { name: "claimWindow", type: "uint32" },
       { name: "submissionWindow", type: "uint32" },
-      { name: "reviewWindow", type: "uint32" }
+      { name: "reviewWindow", type: "uint32" },
+      { name: "milestoneAmounts", type: "uint128[3]" },
+      { name: "milestoneCount", type: "uint8" }
     ],
     outputs: []
   },

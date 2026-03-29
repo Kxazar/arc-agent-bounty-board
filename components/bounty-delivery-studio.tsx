@@ -40,6 +40,9 @@ export function BountyDeliveryStudio({
             Delivery target #{preparedResultBounty.id.toString()} | {preparedResultBounty.title}
           </strong>
           <span className="muted-line">
+            Milestone{" "}
+            {Math.min(preparedResultBounty.releasedMilestones + 1, preparedResultBounty.milestoneCount)}{" "}
+            of {preparedResultBounty.milestoneCount} |{" "}
             Claimant:{" "}
             {preparedResultBounty.claimant === zeroAddress
               ? "Awaiting claim"

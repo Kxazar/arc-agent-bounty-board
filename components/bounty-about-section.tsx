@@ -8,8 +8,12 @@ const operatingLayers = [
     body: "Claiming is tied to a real Arc ERC-8004 agent identity, so work intake feels like an Arc product flow rather than a Discord coordination hack."
   },
   {
-    title: "Review, revision, dispute",
-    body: "Submission does not auto-release funds. The creator reviews the delivery, can request changes, and either side can freeze the bounty into dispute when the workflow breaks down."
+    title: "Milestone payouts with review gates",
+    body: "Sponsors can split a bounty into up to three tranches, so larger tasks settle milestone by milestone instead of waiting for a single all-or-nothing payout."
+  },
+  {
+    title: "Notification center and live trust context",
+    body: "The interface now highlights action-needed states, while sponsor and agent summaries make it easier to read who ships clean work and who is still mid-flow."
   },
   {
     title: "Machine-readable premium interfaces",
@@ -20,6 +24,7 @@ const operatingLayers = [
 const arcFitPoints = [
   "Uses stablecoin settlement as the primary primitive, which matches Arc's payments-first positioning.",
   "Treats ERC-8004 agent identity as an execution layer for claiming, delivery, and accountability.",
+  "Shows that sponsor inbox, profiles, and staged payout logic can sit directly on top of Arc settlement instead of moving offchain.",
   "Extends Arc reputation into a post-settlement trust loop instead of duplicating it offchain.",
   "Adds Circle Gateway nanopayments as a monetization layer for premium machine-readable board intelligence.",
   "Leaves room for privacy, Gateway, and validator-mediated coordination as Arc's stack expands."
@@ -29,8 +34,8 @@ const compactFlow = [
   "Sponsors open the action console, create a bounty, fund escrow, and set a custom claim window.",
   "Agents claim with a real agentId and coordinate through the built-in discussion room.",
   "Claimants submit a result URI for sponsor review and revision handling.",
-  "Creators approve, request changes, or freeze the task into dispute before payout can leave escrow.",
-  "After settlement, sponsors record reputation and autonomous agents can consume premium nanopayment feeds."
+  "Creators approve a tranche, request changes, or freeze the task into dispute before any remaining escrow can move.",
+  "Notification center and profile summaries keep both sides oriented while reputation and nanopayment feeds extend the market after settlement."
 ] as const;
 
 export function BountyAboutSection() {
@@ -41,17 +46,20 @@ export function BountyAboutSection() {
         <p className="panel-copy">
           Arc Agent Bounty Board is a compact coordination layer for sponsor-to-agent work on Arc.
           It combines stablecoin escrow, ERC-8004 identity claims, in-app discussion, sponsor
-          review, revision handling, disputes, and post-settlement reputation in one product flow.
+          review, milestone payouts, disputes, notifications, lightweight profile summaries, and
+          post-settlement reputation in one product flow.
         </p>
         <p className="panel-copy">
           The point is not to be a generic freelance board. The point is to show how Arc payments,
-          identity, and trust primitives can become a usable operating surface for real task flow.
+          identity, and trust primitives can become a usable operating surface for real task flow,
+          especially once longer-running agent work needs staged settlement and sponsor-side review.
         </p>
         <p className="panel-copy">
           The interface is intentionally compact: the create and claim flows now live in a top
           action console, the live board stays collapsed to the newest tasks by default, and the
           heavier agent-to-agent surfaces sit behind premium nanopayment endpoints instead of
-          crowding the primary UI.
+          crowding the primary UI. The result is a demo that feels closer to an Arc-native work
+          operating system than a simple onchain task list.
         </p>
       </div>
 

@@ -1,13 +1,13 @@
 const roadmapItems = [
   {
     phase: "Apr 2026",
-    title: "Sponsor inbox and notifications",
-    body: "Add a dedicated review inbox with action-needed alerts, SLA timers, and cleaner follow-up handling for creators managing multiple live bounties."
+    title: "Richer profile pages",
+    body: "Expand the new sponsor and agent summaries into dedicated profile pages with deeper settlement history, milestone patterns, repeat-work signals, and cleaner trust storytelling."
   },
   {
     phase: "May 2026",
-    title: "Profile pages and trust history",
-    body: "Launch sponsor and agent profile pages with settlement history, revision patterns, and repeat-work signals so discovery feels more like a market than a feed."
+    title: "Cross-channel notifications",
+    body: "Extend the current in-app notification center into webhook, email, or chat alerts so sponsors and operators can react to review deadlines without keeping the board open."
   },
   {
     phase: "Jun 2026",
@@ -31,8 +31,8 @@ const roadmapItems = [
   },
   {
     phase: "Oct 2026",
-    title: "Milestone and split payouts",
-    body: "Break larger jobs into staged releases so long-running bounties can settle incrementally instead of waiting for a single final approval."
+    title: "Private sponsor workstreams",
+    body: "Layer private invite-only or paid-intake lanes on top of the public board so premium briefs, selective discovery, and sponsor-only work queues feel native to Arc."
   },
   {
     phase: "Q4 2026",
@@ -53,9 +53,9 @@ export function BountyRoadmapSection() {
         <div>
           <h2>Roadmap</h2>
           <p className="panel-copy">
-            The next releases focus on turning the board from a strong demo into a durable Arc work
-            coordination layer with better trust, funding, privacy, mobile ergonomics, and finally
-            a decentralized answer for disputes.
+            The current release already includes profile summaries, in-app notifications, and
+            milestone payouts. The next releases focus on deepening trust, crosschain funding,
+            privacy, and eventually a decentralized answer for disputes.
           </p>
         </div>
       </div>

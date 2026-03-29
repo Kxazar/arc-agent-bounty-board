@@ -13,11 +13,15 @@ export type BountyResult = {
   disputeRaisedBy: Address;
   agentId: bigint;
   payoutAmount: bigint;
+  remainingAmount: bigint;
   claimDeadline: bigint;
   submissionDeadline: bigint;
   reviewDeadline: bigint;
   submissionWindow: number;
   reviewWindow: number;
+  milestoneCount: number;
+  releasedMilestones: number;
+  milestoneAmounts: readonly [bigint, bigint, bigint];
   status: number;
   metadataURI: string;
   resultURI: string;
@@ -88,7 +92,8 @@ export function parseBountyMetadata(metadataURI: string) {
   return {
     title: payload.title,
     summary: payload.summary,
-    contact: payload.contact
+    contact: payload.contact,
+    milestoneSplit: payload.milestoneSplit
   };
 }
 
@@ -96,11 +101,13 @@ export function buildMetadataUri(input: {
   title: string;
   summary: string;
   contact: string;
+  milestoneSplit?: string;
 }) {
   const payload = {
     title: input.title.trim(),
     summary: input.summary.trim(),
     contact: input.contact.trim(),
+    milestoneSplit: input.milestoneSplit?.trim() || "100",
     category: "agentic-ops",
     createdAt: new Date().toISOString()
   };

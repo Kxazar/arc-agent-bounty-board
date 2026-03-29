@@ -38,7 +38,12 @@ export function MyBountiesWorkspace({
                 <p>{bounty.summary}</p>
               </div>
               <div className="workspace-meta">
-                <span>{formatUsdc(bounty.payoutAmount)}</span>
+                <span>{formatUsdc(bounty.remainingAmount)} left</span>
+                <span>
+                  {bounty.milestoneCount > 1
+                    ? `${bounty.releasedMilestones}/${bounty.milestoneCount} milestones released`
+                    : "Single payout"}
+                </span>
                 <span>{statusLabels[bounty.status] ?? "Unknown"}</span>
               </div>
               <div className="card-actions">

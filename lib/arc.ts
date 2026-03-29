@@ -32,7 +32,7 @@ export const ARC_CONTRACTS = {
   validationRegistry: "0x8004Cb1BF31DAf7788923b405b754f57acEB4272" as Address
 };
 
-export const deployedBountyBoardAddress = "0xb3deabedf68cfad45e87ea781cea1220a6d3d385" as Address;
+export const deployedBountyBoardAddress = "0x9311a4ef2d914811d28ec5bc16f764b8f21dfdf1" as Address;
 export const bountyBoardAddress =
   configuredBountyBoardAddress && isAddress(configuredBountyBoardAddress)
     ? (configuredBountyBoardAddress as Address)

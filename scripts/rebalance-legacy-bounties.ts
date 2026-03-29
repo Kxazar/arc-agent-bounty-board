@@ -14,6 +14,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 import { arcBountyBoardAbi } from "../lib/abi";
 import { arcTestnet } from "../lib/arc";
+import { singleMilestonePlan } from "./lib/milestone-plan";
 
 const DEFAULTS = {
   rpcUrl: "https://rpc.testnet.arc.network",
@@ -31,11 +32,15 @@ type BountyResult = {
   disputeRaisedBy: Address;
   agentId: bigint;
   payoutAmount: bigint;
+  remainingAmount: bigint;
   claimDeadline: bigint;
   submissionDeadline: bigint;
   reviewDeadline: bigint;
   submissionWindow: number;
   reviewWindow: number;
+  milestoneCount: number;
+  releasedMilestones: number;
+  milestoneAmounts: readonly [bigint, bigint, bigint];
   status: number;
   metadataURI: string;
   resultURI: string;
@@ -131,6 +136,7 @@ async function main() {
     }
 
     const refund = bounty.payoutAmount - rebalanceReward;
+    const milestonePlan = singleMilestonePlan(rebalanceReward);
     const txHash = await walletClient.writeContract({
       address: boardAddress,
       abi: arcBountyBoardAbi,
@@ -141,7 +147,9 @@ async function main() {
         rebalanceReward,
         claimWindowSeconds,
         bounty.submissionWindow,
-        bounty.reviewWindow
+        bounty.reviewWindow,
+        milestonePlan.milestoneAmounts,
+        milestonePlan.milestoneCount
       ],
       maxFeePerGas,
       maxPriorityFeePerGas,

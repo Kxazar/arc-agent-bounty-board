@@ -12,7 +12,7 @@ export function BountyActionCenter({ isConnected, items, onOpenDiscussion, onRun
     <section className="panel board-panel">
       <div className="section-header">
         <div>
-          <h2>Action center</h2>
+          <h2>Notification center</h2>
           <p className="panel-copy">
             A personal inbox that turns the board into a step-by-step operating console instead of a passive list.
           </p>

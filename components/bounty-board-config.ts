@@ -20,6 +20,7 @@ export const defaultCreateForm: CreateForm = {
   summary: "Deliver a concise summary with three action items.",
   contact: "alexe",
   reward: "0.85",
+  milestoneSplit: "100",
   claimWindowValue: "30",
   claimWindowUnit: "days",
   submissionHours: "48",

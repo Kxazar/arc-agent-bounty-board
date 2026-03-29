@@ -41,6 +41,7 @@ contract ArcBountyBoardTest {
 
     function testCreateClaimSubmitApproveFlow() public {
         setUp();
+        uint128[3] memory milestones = _singleMilestonePlan(uint128(PAYOUT));
 
         _mustSucceed(
             sponsor.execute(
@@ -53,12 +54,14 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     "ipfs://bounty-1",
                     uint128(PAYOUT),
                     uint32(1 days),
                     uint32(2 days),
-                    uint32(1 days)
+                    uint32(1 days),
+                    milestones,
+                    uint8(1)
                 )
             )
         );
@@ -89,6 +92,7 @@ contract ArcBountyBoardTest {
 
     function testCreatorCanRequestChangesThenClaimantResubmits() public {
         setUp();
+        uint128[3] memory milestones = _singleMilestonePlan(uint128(PAYOUT));
 
         _mustSucceed(
             sponsor.execute(
@@ -101,12 +105,14 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     "ipfs://bounty-review-1",
                     uint128(PAYOUT),
                     uint32(1 days),
                     uint32(2 days),
-                    uint32(1 days)
+                    uint32(1 days),
+                    milestones,
+                    uint8(1)
                 )
             )
         );
@@ -154,6 +160,7 @@ contract ArcBountyBoardTest {
 
     function testClaimFailsForNonOwner() public {
         setUp();
+        uint128[3] memory milestones = _singleMilestonePlan(uint128(PAYOUT));
 
         _mustSucceed(
             sponsor.execute(
@@ -166,12 +173,14 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     "ipfs://bounty-2",
                     uint128(PAYOUT),
                     uint32(1 days),
                     uint32(2 days),
-                    uint32(1 days)
+                    uint32(1 days),
+                    milestones,
+                    uint8(1)
                 )
             )
         );
@@ -188,6 +197,7 @@ contract ArcBountyBoardTest {
 
     function testCancelAfterClaimDeadline() public {
         setUp();
+        uint128[3] memory milestones = _singleMilestonePlan(uint128(PAYOUT));
 
         _mustSucceed(
             sponsor.execute(
@@ -200,12 +210,14 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     "ipfs://bounty-3",
                     uint128(PAYOUT),
                     uint32(1),
                     uint32(2 days),
-                    uint32(1 days)
+                    uint32(1 days),
+                    milestones,
+                    uint8(1)
                 )
             )
         );
@@ -221,6 +233,8 @@ contract ArcBountyBoardTest {
 
     function testCreatorCanUpdateOpenBounty() public {
         setUp();
+        uint128[3] memory milestones = _singleMilestonePlan(uint128(PAYOUT));
+        uint128[3] memory updatedMilestones = _singleMilestonePlan(uint128(10_000_000));
 
         _mustSucceed(
             sponsor.execute(
@@ -233,12 +247,14 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     "ipfs://bounty-edit-1",
                     uint128(PAYOUT),
                     uint32(1 days),
                     uint32(2 days),
-                    uint32(1 days)
+                    uint32(1 days),
+                    milestones,
+                    uint8(1)
                 )
             )
         );
@@ -249,13 +265,15 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "updateBounty(uint256,string,uint128,uint32,uint32,uint32)",
+                    "updateBounty(uint256,string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     0,
                     "ipfs://bounty-edit-2",
                     uint128(updatedPayout),
                     uint32(3 days),
                     uint32(1 days),
-                    uint32(2 days)
+                    uint32(2 days),
+                    updatedMilestones,
+                    uint8(1)
                 )
             )
         );
@@ -268,6 +286,7 @@ contract ArcBountyBoardTest {
 
     function testParticipantsCanPostMessages() public {
         setUp();
+        uint128[3] memory milestones = _singleMilestonePlan(uint128(PAYOUT));
 
         _mustSucceed(
             sponsor.execute(
@@ -280,12 +299,14 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     "ipfs://bounty-chat-1",
                     uint128(PAYOUT),
                     uint32(1 days),
                     uint32(2 days),
-                    uint32(1 days)
+                    uint32(1 days),
+                    milestones,
+                    uint8(1)
                 )
             )
         );
@@ -314,6 +335,7 @@ contract ArcBountyBoardTest {
 
     function testDisputeBlocksTimeoutRelease() public {
         setUp();
+        uint128[3] memory milestones = _singleMilestonePlan(uint128(PAYOUT));
 
         _mustSucceed(
             sponsor.execute(
@@ -326,12 +348,14 @@ contract ArcBountyBoardTest {
             sponsor.execute(
                 address(board),
                 abi.encodeWithSignature(
-                    "createBounty(string,uint128,uint32,uint32,uint32)",
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
                     "ipfs://bounty-dispute-1",
                     uint128(PAYOUT),
                     uint32(1 days),
                     uint32(2 days),
-                    uint32(1 days)
+                    uint32(1 days),
+                    milestones,
+                    uint8(1)
                 )
             )
         );
@@ -366,6 +390,92 @@ contract ArcBountyBoardTest {
 
         assert(!success);
         assert(stablecoin.balanceOf(address(claimant)) == 0);
+    }
+
+    function testMilestoneApprovalsReleasePartialPayouts() public {
+        setUp();
+        uint128 firstTranche = 10_000_000;
+        uint128 secondTranche = 15_000_000;
+        uint128[3] memory milestones = _twoMilestonePlan(firstTranche, secondTranche);
+
+        _mustSucceed(
+            sponsor.execute(
+                address(stablecoin),
+                abi.encodeWithSignature("approve(address,uint256)", address(board), PAYOUT)
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature(
+                    "createBounty(string,uint128,uint32,uint32,uint32,uint128[3],uint8)",
+                    "ipfs://bounty-milestone-1",
+                    uint128(PAYOUT),
+                    uint32(1 days),
+                    uint32(2 days),
+                    uint32(1 days),
+                    milestones,
+                    uint8(2)
+                )
+            )
+        );
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("claimBounty(uint256,uint256)", 0, AGENT_ID)
+            )
+        );
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("submitResult(uint256,string)", 0, "ipfs://milestone-result-1")
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature("approveBounty(uint256,string)", 0, "ipfs://milestone-review-1")
+            )
+        );
+
+        ArcBountyBoard.Bounty memory bountyAfterFirstApproval = board.getBounty(0);
+        assert(uint256(bountyAfterFirstApproval.status) == uint256(ArcBountyBoard.Status.Claimed));
+        assert(bountyAfterFirstApproval.remainingAmount == secondTranche);
+        assert(bountyAfterFirstApproval.releasedMilestones == 1);
+        assert(stablecoin.balanceOf(address(claimant)) == firstTranche);
+
+        _mustSucceed(
+            claimant.execute(
+                address(board),
+                abi.encodeWithSignature("submitResult(uint256,string)", 0, "ipfs://milestone-result-2")
+            )
+        );
+
+        _mustSucceed(
+            sponsor.execute(
+                address(board),
+                abi.encodeWithSignature("approveBounty(uint256,string)", 0, "ipfs://milestone-review-2")
+            )
+        );
+
+        ArcBountyBoard.Bounty memory bountyAfterFinalApproval = board.getBounty(0);
+        assert(uint256(bountyAfterFinalApproval.status) == uint256(ArcBountyBoard.Status.Approved));
+        assert(bountyAfterFinalApproval.remainingAmount == 0);
+        assert(bountyAfterFinalApproval.releasedMilestones == 2);
+        assert(stablecoin.balanceOf(address(claimant)) == PAYOUT);
+    }
+
+    function _singleMilestonePlan(uint128 amount) private pure returns (uint128[3] memory milestones) {
+        milestones[0] = amount;
+    }
+
+    function _twoMilestonePlan(uint128 first, uint128 second) private pure returns (uint128[3] memory milestones) {
+        milestones[0] = first;
+        milestones[1] = second;
     }
 
     function _mustSucceed(bool success, bytes memory) private pure {

@@ -16,6 +16,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { arcBountyBoardAbi, erc20Abi } from "../lib/abi";
 import { arcTestnet } from "../lib/arc";
 import { buildMetadataUri } from "../lib/agent-tools";
+import { singleMilestonePlan } from "./lib/milestone-plan";
 
 const DEFAULTS = {
   rpcUrl: "https://rpc.testnet.arc.network",
@@ -201,6 +202,7 @@ async function main() {
   }
 
   for (const [index, bounty] of remainingBounties.entries()) {
+    const milestonePlan = singleMilestonePlan(remainingPayouts[index]);
     const createHash = await walletClient.writeContract({
       address: boardAddress,
       abi: arcBountyBoardAbi,
@@ -214,7 +216,9 @@ async function main() {
         remainingPayouts[index],
         120 * 24 * 3600,
         48 * 3600,
-        24 * 3600
+        24 * 3600,
+        milestonePlan.milestoneAmounts,
+        milestonePlan.milestoneCount
       ],
       maxFeePerGas,
       maxPriorityFeePerGas,

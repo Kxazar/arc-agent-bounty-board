@@ -15,6 +15,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 import { arcBountyBoardAbi, erc20Abi } from "../lib/abi";
 import { arcTestnet } from "../lib/arc";
+import { singleMilestonePlan } from "./lib/milestone-plan";
 
 const DEFAULTS = {
   rpcUrl: "https://rpc.testnet.arc.network",
@@ -138,7 +139,15 @@ async function main() {
     address: boardAddress,
     abi: arcBountyBoardAbi,
     functionName: "createBounty",
-    args: [buildDemoMetadataUri(), payoutAmount, 24 * 3600, 48 * 3600, 24 * 3600],
+    args: [
+      buildDemoMetadataUri(),
+      payoutAmount,
+      24 * 3600,
+      48 * 3600,
+      24 * 3600,
+      singleMilestonePlan(payoutAmount).milestoneAmounts,
+      singleMilestonePlan(payoutAmount).milestoneCount
+    ],
     maxFeePerGas,
     maxPriorityFeePerGas,
     account
