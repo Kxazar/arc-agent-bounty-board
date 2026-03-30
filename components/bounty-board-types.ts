@@ -1,6 +1,6 @@
 import type { Address } from "viem";
 
-export type BoardTab = "board" | "about" | "roadmap";
+export type BoardTab = "board" | "inbox" | "profiles" | "about" | "roadmap";
 
 export type BoardStatusFilter =
   | "all"
@@ -113,13 +113,24 @@ export type ActionCenterActionKind =
   | "reputation"
   | "edit";
 
+export type ActionCenterCategory = "setup" | "claim" | "review" | "delivery" | "recovery" | "trust";
+
+export type ActionCenterPriority = "urgent" | "soon" | "normal";
+
+export type ActionCenterAudience = "sponsor" | "claimant" | "shared" | "system";
+
 export type ActionCenterItem = {
   id: string;
   tone: TrustTone;
+  category: ActionCenterCategory;
+  priority: ActionCenterPriority;
+  audience: ActionCenterAudience;
   eyebrow: string;
   title: string;
   detail: string;
   meta: string;
+  deadlineAt?: bigint;
+  deadlineLabel?: string;
   actionLabel: string;
   actionKind: ActionCenterActionKind;
   bounty?: BountyView;
@@ -128,6 +139,8 @@ export type ActionCenterItem = {
 
 export type SponsorProfileSummary = {
   creator: Address;
+  badge: string;
+  tone: TrustTone;
   createdCount: number;
   openCount: number;
   inReviewCount: number;
@@ -136,15 +149,33 @@ export type SponsorProfileSummary = {
   revisionCount: number;
   liveEscrow: bigint;
   releasedVolume: bigint;
+  completionRate: number;
+  disputeRate: number;
+  averageReward: bigint;
+  largestReward: bigint;
+  milestoneBountyCount: number;
+  actionNeededCount: number;
+  recentBounties: BountyView[];
+  activeBounties: BountyView[];
 };
 
 export type AgentProfileSummary = {
   agentId: string;
+  badge: string;
+  tone: TrustTone;
   activeClaims: number;
   completedClaims: number;
   disputedClaims: number;
   revisionsHandled: number;
+  inReviewClaims: number;
   earningsReleased: bigint;
+  pendingPayout: bigint;
+  successRate: number;
+  averageClaimValue: bigint;
+  milestoneClaimCount: number;
+  actionNeededCount: number;
   reputationScore: number | null;
   feedbackCount: number;
+  recentClaims: BountyView[];
+  activeClaimQueue: BountyView[];
 };

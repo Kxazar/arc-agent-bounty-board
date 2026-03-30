@@ -100,9 +100,9 @@ The frontend is a lightweight Next.js app scaffolded around Arc Testnet and the 
 - top action console for create and claim flows
 - create, claim, submit, approve, and timeout actions
 - optional reward split across up to 3 payout milestones
+- dedicated inbox tab with prioritized sponsor, claimant, recovery, and trust actions
+- dedicated profile pages for the connected sponsor wallet and selected Arc agent
 - creator workspace for reviewing and editing open bounties
-- action-needed notification center for review, submit, recovery, and payout follow-up
-- sponsor and agent profile summaries with trust and settlement context
 - custom claim-window builder with hour, day, week, and month inputs plus fast presets including 4 months
 - onchain verification that the connected wallet owns the selected `agentId`
 - recent owned-agent discovery from Arc `IdentityRegistry` activity
