@@ -17,7 +17,7 @@ const operatingLayers = [
   },
   {
     title: "Treasury-assisted sponsor funding",
-    body: "Sponsors can now open a treasury lane, simulate cross-chain funding into Arc, and top up the connected wallet before continuing through the existing bounty flow."
+    body: "Sponsors can now open a Circle-backed treasury lane, issue managed deposit addresses on Base Sepolia or Ethereum Sepolia, route USDC into Arc, and persist treasury state through Supabase."
   },
   {
     title: "Machine-readable premium interfaces",
@@ -28,7 +28,7 @@ const operatingLayers = [
 const arcFitPoints = [
   "Uses stablecoin settlement as the primary primitive, which matches Arc's payments-first positioning.",
   "Treats ERC-8004 agent identity as an execution layer for claiming, delivery, and accountability.",
-  "Adds a treasury-assisted funding lane inspired by Circle's Arc Fintech starter so sponsors can prepare Arc-native bounty capital before creating work.",
+  "Adds a treasury-assisted funding lane inspired by Circle's Arc Fintech starter, now wired for Circle DCW, Bridge Kit routing, and Supabase-backed treasury persistence.",
   "Shows that sponsor inbox, profiles, and staged payout logic can sit directly on top of Arc settlement instead of moving offchain.",
   "Extends Arc reputation into a post-settlement trust loop instead of duplicating it offchain.",
   "Adds Circle Gateway nanopayments as a monetization layer for premium machine-readable board intelligence.",
@@ -36,7 +36,7 @@ const arcFitPoints = [
 ] as const;
 
 const compactFlow = [
-  "Sponsors can now prepare bounty capital through the Treasury tab, then open the action console, create a bounty, and set a custom claim window.",
+  "Sponsors can now prepare bounty capital through the Treasury tab, using either a live Circle DCW funding lane or the demo fallback before they open the action console and create work.",
   "Agents claim with a real agentId and coordinate through the built-in discussion room.",
   "Claimants submit a result URI for sponsor review and revision handling.",
   "Creators approve a tranche, request changes, or freeze the task into dispute before any remaining escrow can move.",

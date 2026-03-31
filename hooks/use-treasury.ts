@@ -14,6 +14,7 @@ function emptySnapshot(wallet: Address | undefined): TreasurySnapshot | null {
 
   return {
     mode: "demo",
+    persistenceBackend: "cookie",
     ownerWallet: wallet,
     status: "not_created",
     circleWalletLabel: null,
@@ -88,10 +89,11 @@ export function useTreasury(params: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, isConnected]);
 
-  async function runMutation(
-    input: { path: string; body: Record<string, string> },
-    successMessage: string
-  ) {
+  async function runMutation(input: {
+    path: string;
+    body: Record<string, string>;
+    getSuccessMessage?: (snapshot: TreasurySnapshot) => string;
+  }) {
     if (!address) {
       throw new Error("Connect a wallet first.");
     }
@@ -113,7 +115,7 @@ export function useTreasury(params: {
       });
       const payload = await parseResponse(response);
       setSnapshot(payload.snapshot);
-      setNotice(successMessage);
+      setNotice(input.getSuccessMessage?.(payload.snapshot) ?? "Treasury updated.");
       return payload.snapshot;
     } catch (mutationError) {
       const nextError = mutationError instanceof Error ? mutationError.message : "Treasury action failed.";
@@ -125,7 +127,12 @@ export function useTreasury(params: {
   }
 
   async function createTreasury() {
-    return runMutation({ path: "/api/treasury/create", body: {} }, "Treasury created.");
+    return runMutation({
+      path: "/api/treasury/create",
+      body: {},
+      getSuccessMessage: (snapshot) =>
+        snapshot.mode === "live" ? "Live treasury created through Circle DCW." : "Treasury created."
+    });
   }
 
   async function issueDepositAddress() {
@@ -135,9 +142,10 @@ export function useTreasury(params: {
         body: {
           sourceChain,
           amount: depositAmount
-        }
-      },
-      "Deposit address issued."
+        },
+        getSuccessMessage: (snapshot) =>
+          snapshot.mode === "live" ? "Live deposit lane issued." : "Deposit address issued."
+      }
     );
   }
 
@@ -147,9 +155,10 @@ export function useTreasury(params: {
         path: "/api/treasury/bridge",
         body: {
           sessionId
-        }
-      },
-      "Treasury bridge simulated."
+        },
+        getSuccessMessage: (snapshot) =>
+          snapshot.mode === "live" ? "Bridge request processed for the live treasury." : "Treasury bridge simulated."
+      }
     );
   }
 
@@ -159,9 +168,12 @@ export function useTreasury(params: {
         path: "/api/treasury/withdraw-to-wallet",
         body: {
           amount: withdrawAmount
-        }
-      },
-      "Arc treasury balance marked for wallet top-up."
+        },
+        getSuccessMessage: (snapshot) =>
+          snapshot.mode === "live"
+            ? "Treasury transfer submitted to your connected wallet."
+            : "Arc treasury balance marked for wallet top-up."
+      }
     );
   }
 

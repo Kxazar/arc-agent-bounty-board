@@ -5,11 +5,15 @@ interface TreasuryEventsFeedProps {
 }
 
 export function TreasuryEventsFeed({ snapshot }: TreasuryEventsFeedProps) {
+  const isLive = snapshot.mode === "live";
+
   return (
     <div className="panel">
       <h3>Treasury events</h3>
       <p className="panel-copy">
-        A compact feed for deposit, bridge, and Arc-ready funding milestones inspired by the Arc Fintech starter workflow.
+        {isLive
+          ? "A compact feed for live deposit, bridge, and Arc-ready funding milestones persisted through Supabase."
+          : "A compact feed for deposit, bridge, and Arc-ready funding milestones inspired by the Arc Fintech starter workflow."}
       </p>
 
       {snapshot.events.length === 0 ? (

@@ -25,17 +25,25 @@ export function TreasuryFundingPanel({
   onIssueDepositAddress,
   onSimulateBridge
 }: TreasuryFundingPanelProps) {
+  const isLive = snapshot.mode === "live";
+
   return (
     <div className="panel">
       <h3>Sponsor funding lane</h3>
       <p className="panel-copy">
-        Mirror the Arc Fintech flow: create a sponsor treasury, issue a deposit address, and move USDC into Arc through a simulated bridge.
+        {isLive
+          ? "Create a live Circle treasury, issue a real deposit lane on the source chain, and route USDC into Arc through Bridge Kit."
+          : "Mirror the Arc Fintech flow: create a sponsor treasury, issue a deposit address, and move USDC into Arc through a simulated bridge."}
       </p>
 
       {snapshot.status !== "ready" ? (
         <div className="post-action-panel">
           <strong>Create the sponsor treasury first</strong>
-          <p>Once created, the app will issue deposit addresses and track bridge-ready funding sessions for this wallet.</p>
+          <p>
+            {isLive
+              ? "Once created, the app will provision Circle-managed wallets for Arc, Base Sepolia, and Ethereum Sepolia, then persist each funding lane in Supabase."
+              : "Once created, the app will issue deposit addresses and track bridge-ready funding sessions for this wallet."}
+          </p>
           <button className="button button-primary" disabled={isBusy} onClick={onCreateTreasury} type="button">
             Create treasury
           </button>
@@ -74,14 +82,14 @@ export function TreasuryFundingPanel({
                 onClick={() => onSimulateBridge(latestSessionId)}
                 type="button"
               >
-                Simulate deposit + bridge
+                {isLive ? "Estimate + bridge into Arc" : "Simulate deposit + bridge"}
               </button>
             ) : null}
           </div>
 
           {snapshot.depositAddress ? (
             <div className="claim-callout claim-context">
-              <strong>Latest deposit address</strong>
+              <strong>{isLive ? "Current Circle deposit address" : "Latest deposit address"}</strong>
               <span className="muted-line">{snapshot.depositAddress}</span>
             </div>
           ) : null}

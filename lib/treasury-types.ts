@@ -1,8 +1,12 @@
-export type TreasuryMode = "demo";
+export type TreasuryMode = "demo" | "live";
+
+export type TreasuryPersistenceBackend = "cookie" | "supabase";
 
 export type TreasuryStatus = "not_created" | "ready";
 
 export type TreasurySourceChain = "Base Sepolia" | "Ethereum Sepolia";
+
+export type TreasuryChainKey = "arc" | "base-sepolia" | "ethereum-sepolia";
 
 export type TreasuryEventStatus = "info" | "success" | "warning";
 
@@ -21,10 +25,11 @@ export type TreasuryFundingSessionStatus =
   | "completed";
 
 export type TreasuryBalance = {
-  chainKey: "arc";
-  chainLabel: "Arc Testnet";
+  chainKey: TreasuryChainKey;
+  chainLabel: string;
   asset: "USDC";
   amount: string;
+  walletAddress?: string | null;
 };
 
 export type TreasuryEvent = {
@@ -49,6 +54,7 @@ export type TreasuryFundingSession = {
 
 export type TreasurySnapshot = {
   mode: TreasuryMode;
+  persistenceBackend: TreasuryPersistenceBackend;
   ownerWallet: string;
   status: TreasuryStatus;
   circleWalletLabel: string | null;

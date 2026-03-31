@@ -11,8 +11,8 @@ const roadmapItems = [
   },
   {
     phase: "Jun 2026",
-    title: "Live Circle treasury mode",
-    body: "Upgrade the current demo-safe treasury MVP into a live Circle-backed mode with Developer Controlled Wallets, Bridge Kit, and Supabase-backed persistence."
+    title: "Treasury reconciliation and webhooks",
+    body: "Add Circle webhook ingestion, balance reconciliation, and automated funding-session updates so live treasury lanes no longer rely on manual bridge triggers."
   },
   {
     phase: "Jul 2026",
@@ -58,9 +58,10 @@ export function BountyRoadmapSection() {
         <div>
           <h2>Roadmap</h2>
           <p className="panel-copy">
-            The current release already includes profile summaries, in-app notifications, and
-            milestone payouts. The next releases focus on deepening trust, crosschain funding,
-            privacy, and eventually a decentralized answer for disputes.
+            The current release already includes profile summaries, in-app notifications, milestone
+            payouts, and a live-ready Circle treasury lane backed by Supabase persistence. The next
+            releases focus on deeper reconciliation, crosschain funding, privacy, and eventually a
+            decentralized answer for disputes.
           </p>
         </div>
       </div>

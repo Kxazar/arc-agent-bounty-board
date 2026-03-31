@@ -6,6 +6,8 @@ interface TreasuryBalanceCardProps {
 }
 
 export function TreasuryBalanceCard({ snapshot }: TreasuryBalanceCardProps) {
+  const isLive = snapshot.mode === "live";
+
   return (
     <article className="trust-panel profile-hero-panel">
       <div className="section-header">
@@ -13,7 +15,9 @@ export function TreasuryBalanceCard({ snapshot }: TreasuryBalanceCardProps) {
           <span className="card-label">Treasury overview</span>
           <h3>{snapshot.circleWalletLabel ?? "Treasury not created yet"}</h3>
           <p className="panel-copy">
-            This MVP uses a demo-safe treasury state that mirrors the Arc Fintech starter flow: managed treasury, deposit lane, bridge, and Arc balance ready for sponsor operations.
+            {isLive
+              ? "This treasury is backed by Circle Developer Controlled Wallets, Bridge Kit routing, and Supabase persistence for sponsor funding on Arc."
+              : "This MVP uses a demo-safe treasury state that mirrors the Arc Fintech starter flow: managed treasury, deposit lane, bridge, and Arc balance ready for sponsor operations."}
           </p>
         </div>
         <span className="trust-badge trust-warm">{snapshot.mode} mode</span>

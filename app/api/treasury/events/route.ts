@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   try {
     const cookieStore = await cookies();
-    const payload = getTreasurySnapshot(cookieStore, wallet);
+    const payload = await getTreasurySnapshot(cookieStore, wallet);
     return NextResponse.json({ events: payload.snapshot.events });
   } catch (error) {
     return NextResponse.json(

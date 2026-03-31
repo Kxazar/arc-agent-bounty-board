@@ -19,11 +19,15 @@ export function TreasuryWithdrawPanel({
   setWithdrawAmount,
   onWithdraw
 }: TreasuryWithdrawPanelProps) {
+  const isLive = snapshot.mode === "live";
+
   return (
     <div className="panel">
-      <h3>Move Arc funds to your wallet</h3>
+      <h3>{isLive ? "Send Arc treasury funds to your wallet" : "Move Arc funds to your wallet"}</h3>
       <p className="panel-copy">
-        The current MVP keeps bounty creation wallet-native, so treasury funds are topped up into your connected Arc wallet before you create or edit tasks.
+        {isLive
+          ? "In live mode the Arc treasury wallet submits a real USDC transfer into your connected sponsor wallet, so the rest of the bounty flow can stay wallet-native."
+          : "The current MVP keeps bounty creation wallet-native, so treasury funds are topped up into your connected Arc wallet before you create or edit tasks."}
       </p>
 
       <div className="claim-callout claim-context">
@@ -48,7 +52,7 @@ export function TreasuryWithdrawPanel({
           onClick={onWithdraw}
           type="button"
         >
-          Move funds to wallet
+          {isLive ? "Send treasury funds" : "Move funds to wallet"}
         </button>
       </div>
     </div>

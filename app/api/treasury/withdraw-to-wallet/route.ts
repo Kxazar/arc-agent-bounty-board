@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const cookieStore = await cookies();
-    const payload = withdrawToWallet(cookieStore, body.wallet, body.amount);
+    const payload = await withdrawToWallet(cookieStore, body.wallet, body.amount);
     const response = NextResponse.json(payload);
     persistTreasurySnapshot(response.cookies, payload.snapshot);
     return response;

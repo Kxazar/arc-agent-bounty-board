@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     const cookieStore = await cookies();
-    const payload = createTreasury(cookieStore, body.wallet);
+    const payload = await createTreasury(cookieStore, body.wallet);
     const response = NextResponse.json(payload);
     persistTreasurySnapshot(response.cookies, payload.snapshot);
     return response;

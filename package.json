@@ -16,7 +16,12 @@
     "extend:claim-window": "tsx scripts/extend-claim-window.ts"
   },
   "dependencies": {
+    "@circle-fin/adapter-circle-wallets": "^1.2.3",
+    "@circle-fin/bridge-kit": "^1.8.0",
+    "@circle-fin/developer-controlled-wallets": "^10.2.0",
     "@circle-fin/x402-batching": "^2.0.4",
+    "@supabase/ssr": "^0.10.0",
+    "@supabase/supabase-js": "^2.101.0",
     "@tanstack/react-query": "latest",
     "@x402/evm": "^2.8.0",
     "next": "latest",

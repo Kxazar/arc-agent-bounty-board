@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const cookieStore = await cookies();
-    const payload = simulateBridge(cookieStore, body.wallet, body.sessionId);
+    const payload = await simulateBridge(cookieStore, body.wallet, body.sessionId);
     const response = NextResponse.json(payload);
     persistTreasurySnapshot(response.cookies, payload.snapshot);
     return response;

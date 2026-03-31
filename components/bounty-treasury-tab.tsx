@@ -66,7 +66,9 @@ export function BountyTreasuryTab({
         <div>
           <h2>Treasury</h2>
           <p className="panel-copy">
-            A compact Arc Fintech-inspired funding lane for sponsor treasury creation, bridging into Arc, and topping up your connected wallet for the existing bounty flow.
+            {snapshot.mode === "live"
+              ? "A live Circle-backed treasury lane for managed sponsor wallets, Bridge Kit routing into Arc, and persisted funding history in Supabase."
+              : "A compact Arc Fintech-inspired funding lane for sponsor treasury creation, bridging into Arc, and topping up your connected wallet for the existing bounty flow."}
           </p>
         </div>
         <div className="section-actions">

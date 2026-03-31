@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const cookieStore = await cookies();
-    const payload = issueDepositAddress(cookieStore, body.wallet, body.sourceChain, body.amount);
+    const payload = await issueDepositAddress(cookieStore, body.wallet, body.sourceChain, body.amount);
     const response = NextResponse.json(payload);
     persistTreasurySnapshot(response.cookies, payload.snapshot);
     return response;

@@ -171,6 +171,7 @@ export function BountyProfileHub({ agentProfile, sponsorProfile, treasurySnapsho
             {treasurySnapshot?.status === "ready" ? (
               <div className="workspace-meta">
                 <span>Treasury mode: {treasurySnapshot.mode}</span>
+                <span>Persistence: {treasurySnapshot.persistenceBackend}</span>
                 <span>Arc treasury: {formatUsdcString(treasurySnapshot.availableArcUsdc)}</span>
                 <span>Funded volume: {formatUsdcString(treasurySnapshot.totalFundedUsdc)}</span>
               </div>

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   try {
     const cookieStore = await cookies();
-    return NextResponse.json(getTreasurySnapshot(cookieStore, wallet));
+    return NextResponse.json(await getTreasurySnapshot(cookieStore, wallet));
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to load treasury state." },

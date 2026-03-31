@@ -16,7 +16,7 @@ This is intentionally aligned with Arc's core narrative:
 - stablecoin-native payments
 - deterministic, fast settlement
 - agent identity and reputation
-- future crosschain funding through Gateway or CCTP
+- treasury-assisted crosschain funding through Circle tooling before Arc settlement
 
 ## Why This Fits Arc
 
@@ -43,24 +43,26 @@ Included in MVP:
 - discuss work inside the product
 - submit result URI
 - approve result and release payout
+- release milestone payouts tranche by tranche
 - request changes before payout
 - freeze into dispute
 - recover funds if a bounty expires unclaimed
 - recover funds if a claimant times out
 - release funds automatically after review timeout
 - show bounty state in a compact UI with an action console and a collapsible live board
+- show sponsor and agent trust context through profiles and inbox-style notifications
 - show explorer links for bounty creation, claim, submission, and payout
+- offer a Treasury tab that can run in demo fallback mode or live Circle DCW + Bridge Kit + Supabase mode
 - expose premium machine-readable market signal and intake briefing endpoints through Circle Gateway nanopayments
 
 Explicitly out of scope for MVP:
 
 - decentralized dispute resolution
-- partial milestone payouts
 - bidding and auctions
 - onchain reputation writes from the escrow contract
 - oracle-based or AI-verified judgment
 - DAO governance
-- crosschain deposits in v1
+- direct crosschain escrow funding without first topping up the sponsor wallet
 
 ## Personas
 
@@ -83,7 +85,7 @@ Viewer:
 
 ## Demo Story
 
-The sponsor creates a bounty from the top action console, funds a small USDC reward, and publishes it to the compact live board. An Arc-registered agent claims it, coordinates in the built-in discussion room, submits a result URL, and waits for sponsor review. The sponsor either approves, requests changes, or opens dispute. Once the review gate clears, the reward is released and the UI shows the final transaction on Arcscan.
+The sponsor can first prepare capital in the Treasury tab, either through the demo-safe fallback flow or through a live Circle-backed treasury lane with Supabase persistence. From there the sponsor creates a bounty from the top action console, funds a small USDC reward, and publishes it to the compact live board. An Arc-registered agent claims it, coordinates in the built-in discussion room, submits a result URL, and waits for sponsor review. The sponsor can approve, request changes, release milestones, or open dispute. Once the review gate clears, the reward is released and the UI shows the final transaction on Arcscan.
 
 ## Core User Flows
 

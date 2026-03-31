@@ -359,7 +359,10 @@ function buildTreasuryInboxItems(snapshot: TreasurySnapshot | null): ActionCente
         audience: "sponsor",
         eyebrow: "Treasury",
         title: "Create a sponsor treasury before funding from other chains",
-        detail: "This unlocks the Arc Fintech-inspired deposit lane, bridge simulation, and Arc balance prep for your wallet.",
+        detail:
+          snapshot.mode === "live"
+            ? "This unlocks Circle-managed funding lanes, Bridge Kit routing into Arc, and Supabase-backed treasury persistence for your wallet."
+            : "This unlocks the Arc Fintech-inspired deposit lane, bridge simulation, and Arc balance prep for your wallet.",
         meta: "Funding setup",
         actionLabel: "Open treasury",
         actionKind: "treasury"
@@ -380,7 +383,10 @@ function buildTreasuryInboxItems(snapshot: TreasurySnapshot | null): ActionCente
       audience: "sponsor",
       eyebrow: "Treasury funding",
       title: `Finish bridge from ${latestSession.sourceChain}`,
-      detail: `The treasury already issued a deposit lane for ${latestSession.amount} USDC. Move it into Arc to prepare your next bounty.`,
+      detail:
+        snapshot.mode === "live"
+          ? `The treasury already issued a live deposit lane for ${latestSession.amount} USDC. Route it into Arc to prepare your next bounty.`
+          : `The treasury already issued a deposit lane for ${latestSession.amount} USDC. Move it into Arc to prepare your next bounty.`,
       meta: "Bridge ready",
       actionLabel: "Open treasury",
       actionKind: "bridge"
