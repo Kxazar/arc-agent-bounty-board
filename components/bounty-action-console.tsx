@@ -27,11 +27,13 @@ interface BountyActionConsoleProps {
   selectedAgent: OwnedAgent | null;
   selectedAgentReputation?: ReputationSummary;
   selectedBounty: BountyView | null;
+  treasuryArcBalance?: string | null;
   setClaimForm: Dispatch<SetStateAction<ClaimFormValue>>;
   setCreateForm: Dispatch<SetStateAction<CreateForm>>;
   onCancelEdit: () => void;
   onClaim: () => void;
   onOpenStudio: (studio: Exclude<ActionStudioKey, null>) => void;
+  onOpenTreasury?: () => void;
   onSelectAgent: (agentId: bigint) => void;
   onSubmitCreate: () => void;
 }
@@ -51,11 +53,13 @@ export function BountyActionConsole({
   selectedAgent,
   selectedAgentReputation,
   selectedBounty,
+  treasuryArcBalance,
   setClaimForm,
   setCreateForm,
   onCancelEdit,
   onClaim,
   onOpenStudio,
+  onOpenTreasury,
   onSelectAgent,
   onSubmitCreate
 }: BountyActionConsoleProps) {
@@ -131,8 +135,10 @@ export function BountyActionConsole({
             isSwitching={isSwitching}
             isWriting={isWriting}
             setCreateForm={setCreateForm}
+            treasuryArcBalance={treasuryArcBalance}
             variant="flat"
             onCancelEdit={onCancelEdit}
+            onOpenTreasury={onOpenTreasury}
             onSubmit={onSubmitCreate}
           />
         </div>

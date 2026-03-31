@@ -11,26 +11,31 @@ const roadmapItems = [
   },
   {
     phase: "Jun 2026",
+    title: "Live Circle treasury mode",
+    body: "Upgrade the current demo-safe treasury MVP into a live Circle-backed mode with Developer Controlled Wallets, Bridge Kit, and Supabase-backed persistence."
+  },
+  {
+    phase: "Jul 2026",
     title: "Crosschain funding rails",
     body: "Let sponsors top up bounty treasury from Base or Ethereum through Gateway or CCTP before funding escrow on Arc."
   },
   {
-    phase: "Jul 2026",
+    phase: "Aug 2026",
     title: "Nanopayment signal bundles",
     body: "Expand the existing x402 and Circle Gateway feeds into paid sponsor scoring, agent availability snapshots, and webhook-ready opportunity queues for autonomous agents."
   },
   {
-    phase: "Aug 2026",
+    phase: "Sep 2026",
     title: "Validation hooks before approval",
     body: "Trigger validator or agent-side checks against submitted URIs so creators can combine human review with programmable validation."
   },
   {
-    phase: "Sep 2026",
+    phase: "Oct 2026",
     title: "Opt-in privacy lanes",
     body: "Once Arc privacy primitives ship, support confidential payout amounts with selective disclosure and view-key based access while keeping participant flow auditable. Arc docs list privacy as roadmap-only today, so this stays future-facing by design."
   },
   {
-    phase: "Oct 2026",
+    phase: "Nov 2026",
     title: "Private sponsor workstreams",
     body: "Layer private invite-only or paid-intake lanes on top of the public board so premium briefs, selective discovery, and sponsor-only work queues feel native to Arc."
   },

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import type { ActionCenterItem, BountyView } from "@/components/bounty-board-types";
 
-type InboxFilter = "all" | "urgent" | "sponsor" | "claimant" | "recovery" | "trust";
+type InboxFilter = "all" | "urgent" | "sponsor" | "claimant" | "funding" | "recovery" | "trust";
 
 interface BountyActionCenterProps {
   isConnected: boolean;
@@ -18,6 +18,7 @@ const filterLabels: Record<InboxFilter, string> = {
   urgent: "Urgent",
   sponsor: "Sponsor",
   claimant: "Claimant",
+  funding: "Funding",
   recovery: "Recovery",
   trust: "Trust loop"
 };
@@ -27,6 +28,7 @@ function matchesInboxFilter(item: ActionCenterItem, filter: InboxFilter) {
   if (filter === "urgent") return item.priority === "urgent";
   if (filter === "sponsor") return item.audience === "sponsor";
   if (filter === "claimant") return item.audience === "claimant";
+  if (filter === "funding") return item.category === "funding";
   if (filter === "recovery") return item.category === "recovery";
   return item.category === "trust";
 }
@@ -40,6 +42,7 @@ function describeAudience(item: ActionCenterItem) {
 
 function describeCategory(item: ActionCenterItem) {
   if (item.category === "setup") return "Setup";
+  if (item.category === "funding") return "Funding";
   if (item.category === "claim") return "Claim";
   if (item.category === "review") return "Review";
   if (item.category === "delivery") return "Delivery";

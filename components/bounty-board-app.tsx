@@ -15,6 +15,7 @@ import { BountyDiscussionModal } from "@/components/bounty-discussion-modal";
 import { BountyMarketOverview } from "@/components/bounty-market-overview";
 import { BountyProfileHub } from "@/components/bounty-profile-hub";
 import { BountyRoadmapSection } from "@/components/bounty-roadmap-section";
+import { BountyTreasuryTab } from "@/components/bounty-treasury-tab";
 import { FeaturedBountiesStrip } from "@/components/featured-bounties-strip";
 import { MyBountiesWorkspace } from "@/components/my-bounties-workspace";
 import { NanopaymentsPanel } from "@/components/nanopayments-panel";
@@ -32,10 +33,12 @@ import type {
   TrustTone
 } from "@/components/bounty-board-types";
 import { useBountyBoard } from "@/hooks/use-bounty-board";
+import { useTreasury } from "@/hooks/use-treasury";
 import type { ReputationSummary } from "@/lib/agent-tools";
 import { ARC_CONTRACTS, arcTestnet } from "@/lib/arc";
 import { explorerAddressLink, explorerTxLink, formatUsdc, shortenAddress } from "@/lib/format";
 import { nanopaymentDocs } from "@/lib/nanopayments-shared";
+import type { TreasurySnapshot } from "@/lib/treasury-types";
 
 function fallbackDiscussionDraft() {
   return {
@@ -341,6 +344,68 @@ function compareActionCenterItems(left: ActionCenterItem, right: ActionCenterIte
   return leftDeadline < rightDeadline ? -1 : 1;
 }
 
+function buildTreasuryInboxItems(snapshot: TreasurySnapshot | null): ActionCenterItem[] {
+  if (!snapshot) {
+    return [];
+  }
+
+  if (snapshot.status !== "ready") {
+    return [
+      {
+        id: "treasury-create",
+        tone: "warm",
+        category: "funding",
+        priority: "normal",
+        audience: "sponsor",
+        eyebrow: "Treasury",
+        title: "Create a sponsor treasury before funding from other chains",
+        detail: "This unlocks the Arc Fintech-inspired deposit lane, bridge simulation, and Arc balance prep for your wallet.",
+        meta: "Funding setup",
+        actionLabel: "Open treasury",
+        actionKind: "treasury"
+      }
+    ];
+  }
+
+  const items: ActionCenterItem[] = [];
+  const latestSession = snapshot.sessions[0];
+  const availableTreasury = Number(snapshot.availableArcUsdc);
+
+  if (latestSession && latestSession.status === "address_issued") {
+    items.push({
+      id: `treasury-bridge-${latestSession.id}`,
+      tone: "accent",
+      category: "funding",
+      priority: "soon",
+      audience: "sponsor",
+      eyebrow: "Treasury funding",
+      title: `Finish bridge from ${latestSession.sourceChain}`,
+      detail: `The treasury already issued a deposit lane for ${latestSession.amount} USDC. Move it into Arc to prepare your next bounty.`,
+      meta: "Bridge ready",
+      actionLabel: "Open treasury",
+      actionKind: "bridge"
+    });
+  }
+
+  if (availableTreasury > 0) {
+    items.push({
+      id: "treasury-withdraw",
+      tone: "accent",
+      category: "funding",
+      priority: "normal",
+      audience: "sponsor",
+      eyebrow: "Arc balance ready",
+      title: "Top up your connected wallet from treasury",
+      detail: `There is ${snapshot.availableArcUsdc} USDC sitting on the Arc treasury lane and ready for your next sponsor action.`,
+      meta: "Wallet top-up",
+      actionLabel: "Open treasury",
+      actionKind: "withdraw"
+    });
+  }
+
+  return items;
+}
+
 function buildActionCenterItems(params: {
   address?: Address;
   bounties: BountyView[];
@@ -348,8 +413,9 @@ function buildActionCenterItems(params: {
   isOnArc: boolean;
   selectedClaimAgentId: string;
   reputationReceipts: Record<string, string>;
+  treasurySnapshot: TreasurySnapshot | null;
 }): ActionCenterItem[] {
-  const { address, bounties, isConnected, isOnArc, selectedClaimAgentId, reputationReceipts } = params;
+  const { address, bounties, isConnected, isOnArc, selectedClaimAgentId, reputationReceipts, treasurySnapshot } = params;
 
   if (!isConnected) {
     return [
@@ -393,7 +459,7 @@ function buildActionCenterItems(params: {
 
   const lowerAddress = address.toLowerCase();
   const nowMs = Date.now();
-  const items: ActionCenterItem[] = [];
+  const items: ActionCenterItem[] = [...buildTreasuryInboxItems(treasurySnapshot)];
 
   for (const bounty of bounties) {
     const bountyId = bounty.id.toString();
@@ -656,6 +722,10 @@ function matchesScopeFilter(bounty: BountyView, scopeFilter: BoardScopeFilter, l
 
 export function BountyBoardApp() {
   const { wallet, board, forms, ui, meta, actions } = useBountyBoard();
+  const treasury = useTreasury({
+    address: wallet.address,
+    isConnected: wallet.isConnected
+  });
   const [activeStudio, setActiveStudio] = useState<ActionStudioKey>(null);
   const [isBoardExpanded, setIsBoardExpanded] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -675,6 +745,25 @@ export function BountyBoardApp() {
     switchToArc,
     walletUsdc
   } = wallet;
+  const {
+    snapshot: treasurySnapshot,
+    latestSession: latestTreasurySession,
+    isLoading: isLoadingTreasury,
+    isSubmitting: isSubmittingTreasury,
+    error: treasuryError,
+    notice: treasuryNotice,
+    sourceChain: treasurySourceChain,
+    setSourceChain: setTreasurySourceChain,
+    depositAmount: treasuryDepositAmount,
+    setDepositAmount: setTreasuryDepositAmount,
+    withdrawAmount: treasuryWithdrawAmount,
+    setWithdrawAmount: setTreasuryWithdrawAmount,
+    refreshTreasury,
+    createTreasury,
+    issueDepositAddress,
+    simulateBridge,
+    withdrawToWallet
+  } = treasury;
   const {
     bounties,
     myBounties,
@@ -838,7 +927,8 @@ export function BountyBoardApp() {
     isConnected,
     isOnArc,
     selectedClaimAgentId: claimForm.agentId,
-    reputationReceipts
+    reputationReceipts,
+    treasurySnapshot
   });
   const urgentInboxCount = actionCenterItems.filter((item) => item.priority === "urgent").length;
   const sponsorProfile = address ? buildSponsorProfileSummary(bounties, address) : null;
@@ -859,6 +949,10 @@ export function BountyBoardApp() {
     {
       label: "Circle faucet",
       url: "https://faucet.circle.com"
+    },
+    {
+      label: "Arc Fintech starter",
+      url: "https://github.com/circlefin/arc-fintech"
     },
     ...nanopaymentDocs
   ];
@@ -897,6 +991,11 @@ export function BountyBoardApp() {
 
     if (item.actionKind === "switch") {
       void switchToArc();
+      return;
+    }
+
+    if (item.actionKind === "treasury" || item.actionKind === "bridge" || item.actionKind === "withdraw") {
+      setActiveTab("treasury");
       return;
     }
 
@@ -1067,6 +1166,18 @@ export function BountyBoardApp() {
           Board
         </button>
         <button
+          aria-selected={activeTab === "treasury"}
+          className={`tab-button ${activeTab === "treasury" ? "tab-active" : ""}`}
+          onClick={() => setActiveTab("treasury")}
+          role="tab"
+          type="button"
+        >
+          Treasury
+          <span className={`tab-badge ${treasurySnapshot?.availableArcUsdc && Number(treasurySnapshot.availableArcUsdc) > 0 ? "tab-badge-live" : ""}`}>
+            {treasurySnapshot?.status === "ready" ? "Ready" : "Setup"}
+          </span>
+        </button>
+        <button
           aria-selected={activeTab === "inbox"}
           className={`tab-button ${activeTab === "inbox" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("inbox")}
@@ -1136,6 +1247,7 @@ export function BountyBoardApp() {
             selectedAgent={selectedAgent}
             selectedAgentReputation={selectedAgentReputation}
             selectedBounty={selectedBounty}
+            treasuryArcBalance={treasurySnapshot?.availableArcUsdc ?? null}
             setClaimForm={setClaimForm}
             setCreateForm={setCreateForm}
             onCancelEdit={handleCancelCreateEdit}
@@ -1143,6 +1255,7 @@ export function BountyBoardApp() {
               void handleClaimBounty();
             }}
             onOpenStudio={toggleStudio}
+            onOpenTreasury={() => setActiveTab("treasury")}
             onSelectAgent={handleSelectAgent}
             onSubmitCreate={() => {
               void handleCreateBounty();
@@ -1355,6 +1468,40 @@ export function BountyBoardApp() {
         </>
       ) : null}
 
+      {activeTab === "treasury" ? (
+        <BountyTreasuryTab
+          connectedAddress={address}
+          depositAmount={treasuryDepositAmount}
+          error={treasuryError}
+          isConnected={isConnected}
+          isLoading={isLoadingTreasury}
+          isSubmitting={isSubmittingTreasury}
+          latestSessionId={latestTreasurySession?.status === "address_issued" ? latestTreasurySession.id : null}
+          notice={treasuryNotice}
+          snapshot={treasurySnapshot}
+          sourceChain={treasurySourceChain}
+          withdrawAmount={treasuryWithdrawAmount}
+          setDepositAmount={setTreasuryDepositAmount}
+          setSourceChain={setTreasurySourceChain}
+          setWithdrawAmount={setTreasuryWithdrawAmount}
+          onCreateTreasury={() => {
+            void createTreasury();
+          }}
+          onIssueDepositAddress={() => {
+            void issueDepositAddress();
+          }}
+          onRefresh={() => {
+            void refreshTreasury();
+          }}
+          onSimulateBridge={(sessionId) => {
+            void simulateBridge(sessionId);
+          }}
+          onWithdraw={() => {
+            void withdrawToWallet();
+          }}
+        />
+      ) : null}
+
       {activeTab === "inbox" ? (
         <BountyActionCenter
           isConnected={isConnected}
@@ -1366,7 +1513,9 @@ export function BountyBoardApp() {
         />
       ) : null}
 
-      {activeTab === "profiles" ? <BountyProfileHub agentProfile={agentProfile} sponsorProfile={sponsorProfile} /> : null}
+      {activeTab === "profiles" ? (
+        <BountyProfileHub agentProfile={agentProfile} sponsorProfile={sponsorProfile} treasurySnapshot={treasurySnapshot} />
+      ) : null}
 
       {activeTab === "about" ? <BountyAboutSection /> : null}
 

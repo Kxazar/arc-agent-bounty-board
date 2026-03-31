@@ -4,11 +4,13 @@ import { useState } from "react";
 
 import { statusLabels } from "@/components/bounty-board-config";
 import type { AgentProfileSummary, BountyView, SponsorProfileSummary } from "@/components/bounty-board-types";
-import { formatUsdc, shortenAddress } from "@/lib/format";
+import { formatUsdc, formatUsdcString, shortenAddress } from "@/lib/format";
+import type { TreasurySnapshot } from "@/lib/treasury-types";
 
 interface BountyProfileHubProps {
   agentProfile: AgentProfileSummary | null;
   sponsorProfile: SponsorProfileSummary | null;
+  treasurySnapshot?: TreasurySnapshot | null;
 }
 
 function describeMilestoneProgress(bounty: BountyView) {
@@ -52,7 +54,7 @@ function ProfileActivityList({
   );
 }
 
-export function BountyProfileHub({ agentProfile, sponsorProfile }: BountyProfileHubProps) {
+export function BountyProfileHub({ agentProfile, sponsorProfile, treasurySnapshot }: BountyProfileHubProps) {
   const [preferredPage, setPreferredPage] = useState<"sponsor" | "agent">(sponsorProfile ? "sponsor" : "agent");
 
   if (!agentProfile && !sponsorProfile) {
@@ -165,6 +167,14 @@ export function BountyProfileHub({ agentProfile, sponsorProfile }: BountyProfile
                 <strong>{sponsorProfile.revisionCount}</strong>
               </div>
             </div>
+
+            {treasurySnapshot?.status === "ready" ? (
+              <div className="workspace-meta">
+                <span>Treasury mode: {treasurySnapshot.mode}</span>
+                <span>Arc treasury: {formatUsdcString(treasurySnapshot.availableArcUsdc)}</span>
+                <span>Funded volume: {formatUsdcString(treasurySnapshot.totalFundedUsdc)}</span>
+              </div>
+            ) : null}
           </article>
 
           <div className="grid-two">

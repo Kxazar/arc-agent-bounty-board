@@ -1,6 +1,6 @@
 import type { Address } from "viem";
 
-export type BoardTab = "board" | "inbox" | "profiles" | "about" | "roadmap";
+export type BoardTab = "board" | "treasury" | "inbox" | "profiles" | "about" | "roadmap";
 
 export type BoardStatusFilter =
   | "all"
@@ -105,6 +105,9 @@ export type FeaturedBountySpotlight = {
 export type ActionCenterActionKind =
   | "connect"
   | "switch"
+  | "treasury"
+  | "bridge"
+  | "withdraw"
   | "claim"
   | "submit"
   | "approve"
@@ -113,7 +116,7 @@ export type ActionCenterActionKind =
   | "reputation"
   | "edit";
 
-export type ActionCenterCategory = "setup" | "claim" | "review" | "delivery" | "recovery" | "trust";
+export type ActionCenterCategory = "setup" | "funding" | "claim" | "review" | "delivery" | "recovery" | "trust";
 
 export type ActionCenterPriority = "urgent" | "soon" | "normal";
 

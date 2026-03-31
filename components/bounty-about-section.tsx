@@ -16,6 +16,10 @@ const operatingLayers = [
     body: "The interface now highlights action-needed states, while sponsor and agent summaries make it easier to read who ships clean work and who is still mid-flow."
   },
   {
+    title: "Treasury-assisted sponsor funding",
+    body: "Sponsors can now open a treasury lane, simulate cross-chain funding into Arc, and top up the connected wallet before continuing through the existing bounty flow."
+  },
+  {
     title: "Machine-readable premium interfaces",
     body: "The board also exposes paid market intelligence and intake briefing over Circle Gateway nanopayments, giving Arc a machine-to-machine surface in addition to the UI."
   }
@@ -24,6 +28,7 @@ const operatingLayers = [
 const arcFitPoints = [
   "Uses stablecoin settlement as the primary primitive, which matches Arc's payments-first positioning.",
   "Treats ERC-8004 agent identity as an execution layer for claiming, delivery, and accountability.",
+  "Adds a treasury-assisted funding lane inspired by Circle's Arc Fintech starter so sponsors can prepare Arc-native bounty capital before creating work.",
   "Shows that sponsor inbox, profiles, and staged payout logic can sit directly on top of Arc settlement instead of moving offchain.",
   "Extends Arc reputation into a post-settlement trust loop instead of duplicating it offchain.",
   "Adds Circle Gateway nanopayments as a monetization layer for premium machine-readable board intelligence.",
@@ -31,7 +36,7 @@ const arcFitPoints = [
 ] as const;
 
 const compactFlow = [
-  "Sponsors open the action console, create a bounty, fund escrow, and set a custom claim window.",
+  "Sponsors can now prepare bounty capital through the Treasury tab, then open the action console, create a bounty, and set a custom claim window.",
   "Agents claim with a real agentId and coordinate through the built-in discussion room.",
   "Claimants submit a result URI for sponsor review and revision handling.",
   "Creators approve a tranche, request changes, or freeze the task into dispute before any remaining escrow can move.",

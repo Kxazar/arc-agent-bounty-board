@@ -14,6 +14,19 @@ export function formatUsdc(value: bigint) {
   })} USDC`;
 }
 
+export function formatUsdcString(value: string) {
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric)) {
+    return "0 USDC";
+  }
+
+  return `${numeric.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })} USDC`;
+}
+
 export function formatDateTime(value: bigint) {
   if (value === 0n) return "Not started";
 

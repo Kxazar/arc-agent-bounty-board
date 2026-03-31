@@ -17,6 +17,8 @@ interface BountyCreateStudioProps {
   setCreateForm: Dispatch<SetStateAction<CreateForm>>;
   onSubmit: () => void;
   onCancelEdit: () => void;
+  treasuryArcBalance?: string | null;
+  onOpenTreasury?: () => void;
   variant?: "panel" | "flat";
 }
 
@@ -28,6 +30,8 @@ export function BountyCreateStudio({
   setCreateForm,
   onSubmit,
   onCancelEdit,
+  treasuryArcBalance,
+  onOpenTreasury,
   variant = "panel"
 }: BountyCreateStudioProps) {
   return (
@@ -46,6 +50,20 @@ export function BountyCreateStudio({
           <span className="muted-line">
             Changes update the live bounty and refresh its claim window from the moment you save.
           </span>
+        </div>
+      ) : null}
+
+      {treasuryArcBalance && treasuryArcBalance !== "0" ? (
+        <div className="claim-callout claim-context">
+          <strong>Treasury Arc balance available</strong>
+          <span className="muted-line">
+            {treasuryArcBalance} USDC is ready in Treasury. Move it to your connected wallet before creating the next bounty.
+          </span>
+          {onOpenTreasury ? (
+            <button className="button button-ghost" onClick={onOpenTreasury} type="button">
+              Open treasury
+            </button>
+          ) : null}
         </div>
       ) : null}
 
