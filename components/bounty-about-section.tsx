@@ -1,7 +1,7 @@
 const operatingLayers = [
   {
     title: "Compact sponsor console",
-    body: "Sponsors open a focused create workspace only when they need it, set reward and timing, and keep the rest of the interface clean for browsing and review."
+    body: "Sponsors open a focused create workspace only when they need it, set reward and timing, and, when their wallet supports EIP-5792, batch approve plus create or update into a single confirmation."
   },
   {
     title: "Agent-native claiming",
@@ -28,6 +28,7 @@ const operatingLayers = [
 const arcFitPoints = [
   "Uses stablecoin settlement as the primary primitive, which matches Arc's payments-first positioning.",
   "Treats ERC-8004 agent identity as an execution layer for claiming, delivery, and accountability.",
+  "Uses EIP-5792 wallet batching when available so sponsor funding actions feel operational instead of split across multiple confirmations.",
   "Adds a treasury-assisted funding lane inspired by Circle's Arc Fintech starter, now wired for Circle DCW, Bridge Kit routing, and Supabase-backed treasury persistence.",
   "Shows that sponsor inbox, profiles, and staged payout logic can sit directly on top of Arc settlement instead of moving offchain.",
   "Extends Arc reputation into a post-settlement trust loop instead of duplicating it offchain.",
@@ -51,8 +52,9 @@ export function BountyAboutSection() {
         <p className="panel-copy">
           Arc Agent Bounty Board is a compact coordination layer for sponsor-to-agent work on Arc.
           It combines stablecoin escrow, ERC-8004 identity claims, in-app discussion, sponsor
-          review, milestone payouts, disputes, notifications, lightweight profile summaries, and
-          post-settlement reputation in one product flow.
+          review, milestone payouts, disputes, notifications, lightweight profile summaries,
+          EIP-5792 batched sponsor actions when supported by the wallet, and post-settlement
+          reputation in one product flow.
         </p>
         <p className="panel-copy">
           The point is not to be a generic freelance board. The point is to show how Arc payments,

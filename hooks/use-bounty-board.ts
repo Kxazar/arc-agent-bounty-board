@@ -1,7 +1,8 @@
 "use client";
 
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 
+import { sendAtomicCallsIfSupported } from "@/lib/eip5792";
 import { arcTestnet } from "@/lib/arc";
 import { defaultDiscussionDraft } from "@/hooks/bounty-board-shared";
 import { useBountyBoardActions } from "@/hooks/use-bounty-board-actions";
@@ -41,6 +42,32 @@ export function useBountyBoard() {
     setters.setLastHash(hash);
   }
 
+  async function runAtomicCallsIfSupported(
+    calls: Array<{
+      address: Address;
+      abi: unknown;
+      functionName: string;
+      args: readonly unknown[];
+      value?: bigint;
+    }>
+  ) {
+    if (!walletData.address) {
+      throw new Error("Connect your wallet first.");
+    }
+
+    const result = await sendAtomicCallsIfSupported({
+      walletClient: walletData.walletClient,
+      account: walletData.address,
+      calls
+    });
+
+    if (result.hash) {
+      setters.setLastHash(result.hash);
+    }
+
+    return result;
+  }
+
   const discussion = useDiscussionComposer({
     publicClient: walletData.publicClient,
     resolvedBoardAddress: meta.resolvedBoardAddress,
@@ -57,6 +84,7 @@ export function useBountyBoard() {
     address: walletData.address,
     publicClient: walletData.publicClient,
     writeContractAsync,
+    runAtomicCallsIfSupported,
     ensureArcWallet,
     waitForReceipt,
     refreshBoard: dataActions.refreshBoard,

@@ -38,6 +38,13 @@ type UseBountyBoardActionsParams = {
   address: Address | undefined;
   publicClient: PublicClient | undefined;
   writeContractAsync: WriteContractFn;
+  runAtomicCallsIfSupported: (calls: Array<{
+    address: Address;
+    abi: unknown;
+    functionName: string;
+    args: readonly unknown[];
+    value?: bigint;
+  }>) => Promise<{ supported: boolean; hash: Hex | null }>;
   ensureArcWallet: () => Promise<void>;
   waitForReceipt: (hash: Hex) => Promise<void>;
   refreshBoard: () => Promise<void>;
@@ -58,6 +65,7 @@ export function useBountyBoardActions({
   address,
   publicClient,
   writeContractAsync,
+  runAtomicCallsIfSupported,
   ensureArcWallet,
   waitForReceipt,
   refreshBoard,
@@ -94,7 +102,7 @@ export function useBountyBoardActions({
     setCreateForm({ ...defaultCreateForm });
   }
 
-function deriveClaimHours(deadline: bigint) {
+  function deriveClaimHours(deadline: bigint) {
     const remainingSeconds = Number(deadline) - Math.floor(Date.now() / 1000);
     return Math.max(1, Math.ceil(remainingSeconds / 3600)).toString();
   }
@@ -368,9 +376,82 @@ function deriveClaimHours(deadline: bigint) {
         functionName: "allowance",
         args: [connectedAddress, resolvedBoardAddress]
       })) as bigint;
+      const needsApproval = additionalEscrowNeeded > 0n && allowance < additionalEscrowNeeded;
 
-      if (additionalEscrowNeeded > 0n && allowance < additionalEscrowNeeded) {
-        setNotice("Approving USDC escrow allowance...");
+      const metadataURI = buildMetadataUri({
+        title,
+        summary,
+        contact,
+        milestoneSplit: createForm.milestoneSplit
+      });
+
+      const createOrUpdateCall = editingBounty
+        ? {
+            address: resolvedBoardAddress,
+            abi: arcBountyBoardAbi,
+            functionName: "updateBounty",
+            args: [
+              editingBounty.id,
+              metadataURI,
+              payoutAmount,
+              claimWindow,
+              submissionWindow,
+              reviewWindow,
+              milestonePlan.milestoneAmounts,
+              milestonePlan.milestoneCount
+            ] as const
+          }
+        : {
+            address: resolvedBoardAddress,
+            abi: arcBountyBoardAbi,
+            functionName: "createBounty",
+            args: [
+              metadataURI,
+              payoutAmount,
+              claimWindow,
+              submissionWindow,
+              reviewWindow,
+              milestonePlan.milestoneAmounts,
+              milestonePlan.milestoneCount
+            ] as const
+          };
+
+      if (needsApproval) {
+        setNotice(
+          editingBounty
+            ? "Trying wallet batching for approve + update..."
+            : "Trying wallet batching for approve + create..."
+        );
+
+        const batchedResult = await runAtomicCallsIfSupported([
+          {
+            address: ARC_CONTRACTS.usdc,
+            abi: erc20Abi,
+            functionName: "approve",
+            args: [resolvedBoardAddress, maxUint256] as const
+          },
+          createOrUpdateCall
+        ]);
+
+        if (batchedResult.supported) {
+          await refreshBoard();
+
+          if (editingBounty) {
+            resetCreateStudio();
+            setNotice("Bounty updated through a single batched wallet confirmation.");
+            return;
+          }
+
+          if (createdBountyId !== null) {
+            primeClaimFlow(createdBountyId);
+          }
+          setNotice("Bounty created through a single batched wallet confirmation.");
+          return;
+        }
+      }
+
+      if (needsApproval) {
+        setNotice("Wallet batching unavailable. Approving USDC escrow allowance first...");
 
         const approveHash = await writeContractAsync({
           address: ARC_CONTRACTS.usdc,
@@ -383,30 +464,14 @@ function deriveClaimHours(deadline: bigint) {
         await waitForReceipt(approveHash);
       }
 
-      const metadataURI = buildMetadataUri({
-        title,
-        summary,
-        contact,
-        milestoneSplit: createForm.milestoneSplit
-      });
-
       if (editingBounty) {
         setNotice("Updating bounty on Arc Testnet...");
 
         const updateHash = await writeContractAsync({
-          address: resolvedBoardAddress,
-          abi: arcBountyBoardAbi,
-          functionName: "updateBounty",
-          args: [
-            editingBounty.id,
-            metadataURI,
-            payoutAmount,
-            claimWindow,
-            submissionWindow,
-            reviewWindow,
-            milestonePlan.milestoneAmounts,
-            milestonePlan.milestoneCount
-          ],
+          address: createOrUpdateCall.address,
+          abi: createOrUpdateCall.abi,
+          functionName: createOrUpdateCall.functionName,
+          args: createOrUpdateCall.args,
           chainId: arcTestnet.id
         });
 
@@ -420,18 +485,10 @@ function deriveClaimHours(deadline: bigint) {
       setNotice("Creating bounty on Arc Testnet...");
 
       const createHash = await writeContractAsync({
-        address: resolvedBoardAddress,
-        abi: arcBountyBoardAbi,
-        functionName: "createBounty",
-        args: [
-          metadataURI,
-          payoutAmount,
-          claimWindow,
-          submissionWindow,
-          reviewWindow,
-          milestonePlan.milestoneAmounts,
-          milestonePlan.milestoneCount
-        ],
+        address: createOrUpdateCall.address,
+        abi: createOrUpdateCall.abi,
+        functionName: createOrUpdateCall.functionName,
+        args: createOrUpdateCall.args,
         chainId: arcTestnet.id
       });
 

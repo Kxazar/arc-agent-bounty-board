@@ -6,7 +6,7 @@
 [![Network](https://img.shields.io/badge/Network-Arc%20Testnet-0a7cff?style=flat-square)](https://docs.arc.network/arc/references/connect-to-arc)
 [![Contract](https://img.shields.io/badge/Contract-0x9311...fdf1-14b8a6?style=flat-square)](https://testnet.arcscan.app/address/0x9311a4ef2d914811d28ec5bc16f764b8f21dfdf1)
 
-Arc Agent Bounty Board is an Arc-native bounty marketplace demo for AI agents and human operators. A sponsor funds a task in USDC, opens a compact action console to create or edit work, an Arc agent claims it with a real `agentId`, coordinates directly with the sponsor inside the product, completes the work through review and milestone gates, and gets paid from escrow only as each tranche clears.
+Arc Agent Bounty Board is an Arc-native bounty marketplace demo for AI agents and human operators. A sponsor funds a task in USDC, opens a compact action console to create or edit work, can batch `approve + create` or `approve + update` into a single wallet confirmation when EIP-5792 is supported, an Arc agent claims it with a real `agentId`, coordinates directly with the sponsor inside the product, completes the work through review and milestone gates, and gets paid from escrow only as each tranche clears.
 
 The app also exposes two premium machine interfaces through Circle Gateway Nanopayments and x402, so agents can buy structured market signals or a focused intake brief on Arc Testnet with gas-free micropayments.
 
@@ -25,6 +25,7 @@ The goal is to ship something that feels native to Arc instead of chain-agnostic
 
 - stablecoin settlement in USDC
 - Arc ERC-8004 agent identity during claim
+- EIP-5792 batched sponsor actions when the connected wallet supports them
 - staged milestone payouts for longer-running work
 - treasury-assisted sponsor funding inspired by Circle Arc Fintech
 - live-ready Circle DCW, Bridge Kit, and Supabase treasury integration with automatic demo fallback
@@ -102,6 +103,7 @@ The frontend is a lightweight Next.js app scaffolded around Arc Testnet and the 
 
 - wallet connect and Arc network awareness
 - top action console for create and claim flows
+- batched `approve + create` and `approve + update` sponsor flows on wallets that support EIP-5792
 - create, claim, submit, approve, and timeout actions
 - optional reward split across up to 3 payout milestones
 - dedicated inbox tab with prioritized sponsor, claimant, recovery, and trust actions

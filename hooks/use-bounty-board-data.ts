@@ -9,6 +9,7 @@ import {
   usePublicClient,
   useReadContract,
   useSwitchChain,
+  useWalletClient,
   useWriteContract
 } from "wagmi";
 
@@ -31,6 +32,7 @@ export function useBountyBoardData() {
   const { disconnect } = useDisconnect();
   const { switchChainAsync, isPending: isSwitching } = useSwitchChain();
   const { writeContractAsync, isPending: isWriting } = useWriteContract();
+  const { data: walletClient } = useWalletClient({ chainId: arcTestnet.id });
   const publicClient = usePublicClient({ chainId: arcTestnet.id });
 
   const [bounties, setBounties] = useState<BountyView[]>([]);
@@ -261,6 +263,7 @@ export function useBountyBoardData() {
       connect,
       disconnect,
       switchChainAsync,
+      walletClient,
       writeContractAsync,
       publicClient,
       walletUsdc
