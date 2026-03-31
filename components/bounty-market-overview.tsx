@@ -19,7 +19,7 @@ export function BountyMarketOverview({
   topAgents
 }: BountyMarketOverviewProps) {
   return (
-    <section className="panel board-panel">
+    <section className="panel board-panel market-overview-panel">
       <div className="section-header">
         <div>
           <h2>Market trust overview</h2>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useState } from "react";
@@ -962,6 +962,14 @@ export function BountyBoardApp() {
     },
     ...nanopaymentDocs
   ];
+  const treasuryModeLabel =
+    treasurySnapshot?.status === "ready"
+      ? treasurySnapshot.mode === "live"
+        ? "Live treasury"
+        : "Demo treasury"
+      : "Treasury setup";
+  const liveStatusLabel = isOnArc ? "Live on Arc Testnet" : "Switch to Arc Testnet";
+  const walletBalanceLabel = typeof walletUsdc === "bigint" ? formatUsdc(walletUsdc) : "Connect wallet";
 
   function resetBoardView() {
     setSearchValue("");
@@ -1050,9 +1058,15 @@ export function BountyBoardApp() {
 
   return (
     <main className="page-shell">
-      <section className="hero">
+      <section className="hero hero-shell">
         <div className="hero-grid">
-          <div>
+          <div className="hero-copy">
+            <div className="hero-chip-row">
+              <span className="hero-chip">{liveStatusLabel}</span>
+              <span className="hero-chip">EIP-5792 sponsor batching</span>
+              <span className="hero-chip">{treasuryModeLabel}</span>
+            </div>
+
             <div className="brand-row">
               <Image
                 alt="Arc Agent Bounty Board logo"
@@ -1068,11 +1082,25 @@ export function BountyBoardApp() {
             </div>
             <div className="eyebrow">Arc-native stablecoin payouts for AI agents</div>
             <h1>Arc Agent Bounty Board</h1>
-            <p className="lede">
-              A compact marketplace where sponsors lock USDC in escrow, Arc agents claim work
-              through ERC-8004 identity, pass sponsor review, and settle on Arc Testnet in a single
-              clean flow.
+            <p className="lede hero-lede">
+              A professional operating surface for sponsor-funded work on Arc, where USDC escrow,
+              ERC-8004 identity, review gates, milestone payouts, treasury funding, and premium
+              machine-readable feeds all live inside one cohesive product.
             </p>
+
+            <div className="hero-link-row">
+              <a {...externalLinkProps} className="hero-link-chip" href="https://docs.arc.network/arc/concepts/welcome-to-arc">
+                Arc docs
+              </a>
+              <a {...externalLinkProps} className="hero-link-chip" href={explorerAddressLink(ARC_CONTRACTS.identityRegistry)}>
+                IdentityRegistry
+              </a>
+              {hasBountyBoardAddress ? (
+                <a {...externalLinkProps} className="hero-link-chip" href={explorerAddressLink(bountyBoardAddress)}>
+                  Live contract
+                </a>
+              ) : null}
+            </div>
 
             <div className="hero-actions">
               {!isConnected ? (
@@ -1105,24 +1133,34 @@ export function BountyBoardApp() {
 
             <div className="hero-band">
               <div className="hero-band-card">
-                <span className="card-label">01</span>
+                <span className="card-label">Operating layer</span>
                 <strong>Fund in USDC</strong>
-                <p>Escrow the payout directly on Arc with predictable fees and clean sponsor controls.</p>
+                <p>Escrow rewards directly on Arc and, when the wallet supports it, batch sponsor approvals into a cleaner single-confirmation flow.</p>
               </div>
               <div className="hero-band-card">
-                <span className="card-label">02</span>
+                <span className="card-label">Identity layer</span>
                 <strong>Claim with agentId</strong>
-                <p>Use real ERC-8004 identity, surface owned agents, and reduce copy-paste during the demo.</p>
+                <p>Use real ERC-8004 identity, surface owned agents automatically, and keep claim intake anchored to an Arc-native trust primitive.</p>
               </div>
               <div className="hero-band-card">
-                <span className="card-label">03</span>
+                <span className="card-label">Trust layer</span>
                 <strong>Review, settle, build trust</strong>
-                <p>Creators review submissions before payout, can request changes or dispute, then close with reputation.</p>
+                <p>Creators review submissions before payout, can request changes or dispute, and close the loop with milestone settlement plus reputation.</p>
               </div>
             </div>
           </div>
 
-          <div className="panel stats-panel">
+          <div className="panel stats-panel hero-side-panel">
+            <div className="hero-side-head">
+              <div>
+                <span className="card-label">Live control tower</span>
+                <h2>Operational snapshot</h2>
+              </div>
+              <span className={`hero-status-pill ${isOnArc ? "hero-status-live" : "hero-status-warn"}`}>
+                {isOnArc ? "Ready" : "Attention"}
+              </span>
+            </div>
+
             <div className="stat-row">
               <span>Wallet</span>
               <strong>{shortenAddress(address)}</strong>
@@ -1133,22 +1171,36 @@ export function BountyBoardApp() {
             </div>
             <div className="stat-row">
               <span>USDC balance</span>
-              <strong>{typeof walletUsdc === "bigint" ? formatUsdc(walletUsdc) : "Connect wallet"}</strong>
+              <strong>{walletBalanceLabel}</strong>
             </div>
             <div className="stat-row">
               <span>Owned agents</span>
               <strong>{isConnected ? ownedAgents.length : 0}</strong>
             </div>
             <div className="stat-row">
-              <span>Active agents</span>
-              <strong>{activeAgentCount}</strong>
+              <span>Treasury mode</span>
+              <strong>{treasuryModeLabel}</strong>
             </div>
-            <div className="stat-row">
-              <span>IdentityRegistry</span>
-              <a {...externalLinkProps} href={explorerAddressLink(ARC_CONTRACTS.identityRegistry)}>
-                Open on Arcscan
-              </a>
+
+            <div className="hero-side-grid">
+              <div className="metric-pill">
+                <span>Open now</span>
+                <strong>{openCount}</strong>
+              </div>
+              <div className="metric-pill">
+                <span>Review queue</span>
+                <strong>{reviewQueueCount}</strong>
+              </div>
+              <div className="metric-pill">
+                <span>Urgent inbox</span>
+                <strong>{urgentInboxCount}</strong>
+              </div>
+              <div className="metric-pill">
+                <span>Active agents</span>
+                <strong>{activeAgentCount}</strong>
+              </div>
             </div>
+
             <div className="stat-row">
               <span>Bounty contract</span>
               <strong>{hasBountyBoardAddress ? shortenAddress(bountyBoardAddress) : "Not configured"}</strong>
@@ -1157,78 +1209,101 @@ export function BountyBoardApp() {
               <span>Selected agent</span>
               <strong>{selectedAgent ? `#${selectedAgent.agentId.toString()}` : "Choose below"}</strong>
             </div>
+
+            <div className="hero-side-links">
+              <a {...externalLinkProps} href={explorerAddressLink(ARC_CONTRACTS.identityRegistry)}>
+                Identity registry
+              </a>
+              {lastHash ? (
+                <a {...externalLinkProps} href={explorerTxLink(lastHash)}>
+                  Latest transaction
+                </a>
+              ) : null}
+            </div>
           </div>
         </div>
       </section>
 
-      <section aria-label="Application sections" className="tab-bar" role="tablist">
-        <button
-          aria-selected={activeTab === "board"}
-          className={`tab-button ${activeTab === "board" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("board")}
-          role="tab"
-          type="button"
-        >
-          Board
-        </button>
-        <button
-          aria-selected={activeTab === "treasury"}
-          className={`tab-button ${activeTab === "treasury" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("treasury")}
-          role="tab"
-          type="button"
-        >
-          Treasury
-          <span className={`tab-badge ${treasurySnapshot?.availableArcUsdc && Number(treasurySnapshot.availableArcUsdc) > 0 ? "tab-badge-live" : ""}`}>
-            {treasurySnapshot?.status === "ready" ? "Ready" : "Setup"}
-          </span>
-        </button>
-        <button
-          aria-selected={activeTab === "inbox"}
-          className={`tab-button ${activeTab === "inbox" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("inbox")}
-          role="tab"
-          type="button"
-        >
-          Inbox
-          {actionCenterItems.length > 0 ? (
-            <span className={`tab-badge ${urgentInboxCount > 0 ? "tab-badge-live" : ""}`}>
-              {urgentInboxCount > 0 ? `${urgentInboxCount} urgent` : `${actionCenterItems.length}`}
+      <section className="panel tab-shell">
+        <div className="tab-shell-head">
+          <div>
+            <span className="card-label">Workspace</span>
+            <h2>Choose a command surface</h2>
+          </div>
+          <p className="panel-copy">
+            Move between live operations, funding, inbox, and trust views without losing context.
+          </p>
+        </div>
+
+        <div aria-label="Application sections" className="tab-bar" role="tablist">
+          <button
+            aria-selected={activeTab === "board"}
+            className={`tab-button ${activeTab === "board" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("board")}
+            role="tab"
+            type="button"
+          >
+            Board
+          </button>
+          <button
+            aria-selected={activeTab === "treasury"}
+            className={`tab-button ${activeTab === "treasury" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("treasury")}
+            role="tab"
+            type="button"
+          >
+            Treasury
+            <span className={`tab-badge ${treasurySnapshot?.availableArcUsdc && Number(treasurySnapshot.availableArcUsdc) > 0 ? "tab-badge-live" : ""}`}>
+              {treasurySnapshot?.status === "ready" ? "Ready" : "Setup"}
             </span>
-          ) : null}
-        </button>
-        <button
-          aria-selected={activeTab === "profiles"}
-          className={`tab-button ${activeTab === "profiles" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("profiles")}
-          role="tab"
-          type="button"
-        >
-          Profiles
-          {(sponsorProfile || agentProfile) && <span className="tab-badge">Live</span>}
-        </button>
-        <button
-          aria-selected={activeTab === "about"}
-          className={`tab-button ${activeTab === "about" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("about")}
-          role="tab"
-          type="button"
-        >
-          About
-        </button>
-        <button
-          aria-selected={activeTab === "roadmap"}
-          className={`tab-button ${activeTab === "roadmap" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("roadmap")}
-          role="tab"
-          type="button"
-        >
-          Roadmap
-        </button>
+          </button>
+          <button
+            aria-selected={activeTab === "inbox"}
+            className={`tab-button ${activeTab === "inbox" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("inbox")}
+            role="tab"
+            type="button"
+          >
+            Inbox
+            {actionCenterItems.length > 0 ? (
+              <span className={`tab-badge ${urgentInboxCount > 0 ? "tab-badge-live" : ""}`}>
+                {urgentInboxCount > 0 ? `${urgentInboxCount} urgent` : `${actionCenterItems.length}`}
+              </span>
+            ) : null}
+          </button>
+          <button
+            aria-selected={activeTab === "profiles"}
+            className={`tab-button ${activeTab === "profiles" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("profiles")}
+            role="tab"
+            type="button"
+          >
+            Profiles
+            {(sponsorProfile || agentProfile) && <span className="tab-badge">Live</span>}
+          </button>
+          <button
+            aria-selected={activeTab === "about"}
+            className={`tab-button ${activeTab === "about" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("about")}
+            role="tab"
+            type="button"
+          >
+            About
+          </button>
+          <button
+            aria-selected={activeTab === "roadmap"}
+            className={`tab-button ${activeTab === "roadmap" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("roadmap")}
+            role="tab"
+            type="button"
+          >
+            Roadmap
+          </button>
+        </div>
       </section>
 
       {activeTab === "board" ? (
-        <>
+        <div className="board-section-stack">
           <BountyMarketOverview
             activeAgentCount={activeAgentCount}
             claimReadyAgentCount={agentTrustEntries.filter((entry) => entry.feedbackCount > 0).length}
@@ -1281,7 +1356,7 @@ export function BountyBoardApp() {
             }}
           />
 
-          <section className="compact-grid">
+          <section className="compact-grid board-secondary-strip">
             <BountyDeliveryStudio
               isSwitching={isSwitching}
               isWriting={isWriting}
@@ -1313,7 +1388,7 @@ export function BountyBoardApp() {
             reviewQueueCount={reviewQueueCount}
           />
 
-          <section className="panel board-panel">
+          <section className="panel board-panel live-board-panel">
             <div className="section-header">
               <div>
                 <h2>Live bounty board</h2>
@@ -1330,7 +1405,7 @@ export function BountyBoardApp() {
                     onClick={() => setIsBoardExpanded((value) => !value)}
                     type="button"
                   >
-                    {isBoardExpanded ? "Collapse board ▲" : `Show ${hiddenBountyCount} more ▼`}
+                    {isBoardExpanded ? "Collapse list" : `Show ${hiddenBountyCount} more tasks`}
                   </button>
                 ) : null}
                 <button
@@ -1471,7 +1546,7 @@ export function BountyBoardApp() {
               </div>
             </div>
           </section>
-        </>
+        </div>
       ) : null}
 
       {activeTab === "treasury" ? (
@@ -1572,3 +1647,4 @@ export function BountyBoardApp() {
     </main>
   );
 }
+

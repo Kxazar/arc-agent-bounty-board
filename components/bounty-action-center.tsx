@@ -59,7 +59,7 @@ export function BountyActionCenter({ isConnected, items, onOpenDiscussion, onRun
   const trustCount = items.filter((item) => item.category === "trust").length;
 
   return (
-    <section className="panel board-panel">
+    <section className="panel board-panel inbox-panel">
       <div className="section-header">
         <div>
           <h2>Notification inbox</h2>

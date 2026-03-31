@@ -1,4 +1,4 @@
-import type { Address } from "viem";
+﻿import type { Address } from "viem";
 
 import type { FeaturedBountySpotlight } from "@/components/bounty-board-types";
 import { formatUsdc, shortenAddress } from "@/lib/format";
@@ -29,7 +29,7 @@ export function FeaturedBountiesStrip({
   }
 
   return (
-    <section className="panel board-panel">
+    <section className="panel board-panel featured-panel">
       <div className="section-header">
         <div>
           <h2>Featured bounties</h2>
@@ -79,7 +79,7 @@ export function FeaturedBountiesStrip({
                   <span className={`trust-badge trust-${sponsorTrust.tone}`}>{sponsorTrust.badge}</span>
                   <span>
                     {sponsorTrust.settledCount} settled
-                    {sponsorTrust.totalPaidOut > 0n ? ` • ${formatUsdc(sponsorTrust.totalPaidOut)} paid` : ""}
+                    {sponsorTrust.totalPaidOut > 0n ? ` | ${formatUsdc(sponsorTrust.totalPaidOut)} paid` : ""}
                   </span>
                 </div>
               ) : null}
@@ -113,3 +113,4 @@ export function FeaturedBountiesStrip({
     </section>
   );
 }
+

@@ -70,7 +70,7 @@ export function BountyProfileHub({ agentProfile, sponsorProfile, treasurySnapsho
   const canSwitch = Boolean(agentProfile && sponsorProfile);
 
   return (
-    <section className="panel board-panel">
+    <section className="panel board-panel profile-hub-panel">
       <div className="section-header">
         <div>
           <h2>Profile pages</h2>
