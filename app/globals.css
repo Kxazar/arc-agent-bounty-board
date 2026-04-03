@@ -2110,11 +2110,21 @@ body::after {
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 
+.hero-link-button {
+  cursor: pointer;
+  font: inherit;
+}
+
 .hero-link-chip:hover {
   transform: translateY(-1px);
   border-color: rgba(88, 228, 176, 0.3);
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
+}
+
+.hero-link-button:focus-visible {
+  outline: 2px solid rgba(88, 228, 176, 0.65);
+  outline-offset: 2px;
 }
 
 .brand-row {

@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatUnits, type Address } from "viem";
 
 import { BountyAboutSection } from "@/components/bounty-about-section";
@@ -738,6 +738,7 @@ export function BountyBoardApp() {
   const [statusFilter, setStatusFilter] = useState<BoardStatusFilter>("all");
   const [scopeFilter, setScopeFilter] = useState<BoardScopeFilter>("all");
   const [sortBy, setSortBy] = useState<BoardSortOption>("newest");
+  const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
 
   const {
     address,
@@ -971,6 +972,18 @@ export function BountyBoardApp() {
   const liveStatusLabel = isOnArc ? "Live on Arc Testnet" : "Switch to Arc Testnet";
   const walletBalanceLabel = typeof walletUsdc === "bigint" ? formatUsdc(walletUsdc) : "Connect wallet";
 
+  useEffect(() => {
+    if (!copiedLabel) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setCopiedLabel(null);
+    }, 1800);
+
+    return () => window.clearTimeout(timeout);
+  }, [copiedLabel]);
+
   function resetBoardView() {
     setSearchValue("");
     setStatusFilter("all");
@@ -980,6 +993,15 @@ export function BountyBoardApp() {
 
   function toggleStudio(nextStudio: Exclude<ActionStudioKey, null>) {
     setActiveStudio((currentStudio) => (currentStudio === nextStudio ? null : nextStudio));
+  }
+
+  async function handleCopy(value: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedLabel(label);
+    } catch {
+      setCopiedLabel(null);
+    }
   }
 
   function openCreateStudioForBounty(bounty: BountyView) {
@@ -1100,6 +1122,26 @@ export function BountyBoardApp() {
                   Live contract
                 </a>
               ) : null}
+              {hasBountyBoardAddress ? (
+                <button
+                  className="hero-link-chip hero-link-button"
+                  onClick={() => {
+                    void handleCopy(bountyBoardAddress, "Contract copied");
+                  }}
+                  type="button"
+                >
+                  {copiedLabel === "Contract copied" ? "Contract copied" : "Copy contract"}
+                </button>
+              ) : null}
+              <button
+                className="hero-link-chip hero-link-button"
+                onClick={() => {
+                  void handleCopy(String(arcTestnet.id), "Chain ID copied");
+                }}
+                type="button"
+              >
+                {copiedLabel === "Chain ID copied" ? "Chain ID copied" : "Copy chain ID"}
+              </button>
             </div>
 
             <div className="hero-actions">
